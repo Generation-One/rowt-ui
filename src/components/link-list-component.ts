@@ -1,6 +1,7 @@
 import { BaseComponent } from './base-component.js';
 import { ApiClient } from '../services/api-client.js';
 import { createElement, querySelector, querySelectorAll } from '../utils/dom-helpers.js';
+import { generateShortUrl } from '../utils/data-transformers.js';
 import type { Link, Project, GetLinksRequest } from '../types/api.js';
 import type { LinkSelectionState, LinkSearchState, LinkSortState } from '../types/ui.js';
 
@@ -125,11 +126,11 @@ export class LinkListComponent extends BaseComponent {
 
     // View mode toggle
     const viewToggle = createElement('div', { className: 'view-toggle' });
-    const tableBtn = this.createButton('Table', 'view-btn active', () => {
-      this.setViewMode('table');
+    const tableBtn = this.createButton('Table', 'view-btn active', async () => {
+      await this.setViewMode('table');
     });
-    const cardsBtn = this.createButton('Cards', 'view-btn', () => {
-      this.setViewMode('cards');
+    const cardsBtn = this.createButton('Cards', 'view-btn', async () => {
+      await this.setViewMode('cards');
     });
     tableBtn.dataset.mode = 'table';
     cardsBtn.dataset.mode = 'cards';
@@ -150,11 +151,10 @@ export class LinkListComponent extends BaseComponent {
     const bar = createElement('div', { className: 'bulk-actions-bar' });
     
     const info = createElement('span', { className: 'bulk-info' });
-    const deleteBtn = this.createButton('Delete Selected', 'btn btn-danger btn-sm disabled', () => {
-      // Bulk delete functionality not supported
-      this.showInfo('Bulk deletion is not currently supported. Links will expire based on server configuration.');
+    const deleteBtn = this.createButton('Delete Selected', 'btn btn-danger btn-sm', () => {
+      this.handleBulkDelete();
     });
-    deleteBtn.setAttribute('title', 'Bulk deletion not currently supported');
+    deleteBtn.setAttribute('title', 'Delete selected links');
     const clearBtn = this.createButton('Clear Selection', 'btn btn-secondary btn-sm', () => {
       this.clearSelection();
     });
@@ -190,8 +190,7 @@ export class LinkListComponent extends BaseComponent {
 
       const response = await this.apiClient.getLinks(params);
       this.links = response.links;
-      this.applyFilters();
-      this.renderLinks();
+      await this.applyFilters();
     } catch (error) {
       console.error('Failed to load links:', error);
       this.showError('Failed to load links');
@@ -200,31 +199,31 @@ export class LinkListComponent extends BaseComponent {
     }
   }
 
-  private applyFilters(): void {
+  private async applyFilters(): Promise<void> {
     let filtered = [...this.links];
-    
+
     // Apply search filter
     if (this.searchState.query) {
       const query = this.searchState.query.toLowerCase();
-      filtered = filtered.filter(link => 
+      filtered = filtered.filter(link =>
         link.url.toLowerCase().includes(query) ||
         link.title?.toLowerCase().includes(query) ||
         link.description?.toLowerCase().includes(query) ||
         (link.shortCode || link.id).toLowerCase().includes(query)
       );
     }
-    
+
     // Apply project filter
     if (this.searchState.projectFilter) {
       filtered = filtered.filter(link => link.projectId === this.searchState.projectFilter);
     }
-    
+
     this.filteredLinks = filtered;
-    this.renderLinks();
+    await this.renderLinks();
     this.updateBulkActionsBar();
   }
 
-  private renderLinks(): void {
+  private async renderLinks(): Promise<void> {
     const contentArea = querySelector('.links-content', this.container) as HTMLElement;
     if (!contentArea) return;
     
@@ -263,13 +262,13 @@ export class LinkListComponent extends BaseComponent {
     }
     
     if (this.viewMode === 'table') {
-      this.renderTable(contentArea);
+      await this.renderTable(contentArea);
     } else {
-      this.renderCards(contentArea);
+      await this.renderCards(contentArea);
     }
   }
 
-  private renderTable(container: HTMLElement): void {
+  private async renderTable(container: HTMLElement): Promise<void> {
     const table = createElement('table', { className: 'links-table' });
     
     // Table header
@@ -325,16 +324,17 @@ export class LinkListComponent extends BaseComponent {
     // Table body
     const tbody = createElement('tbody');
     
-    this.filteredLinks.forEach(link => {
-      const row = this.createTableRow(link);
+    // Create rows asynchronously to handle short URL generation
+    for (const link of this.filteredLinks) {
+      const row = await this.createTableRow(link);
       tbody.appendChild(row);
-    });
+    }
     
     table.appendChild(tbody);
     container.appendChild(table);
   }
 
-  private createTableRow(link: Link): HTMLElement {
+  private async createTableRow(link: Link): Promise<HTMLElement> {
     const row = createElement('tr', { 
       className: this.selection.selectedIds.has(link.id) ? 'selected' : ''
     });
@@ -355,10 +355,11 @@ export class LinkListComponent extends BaseComponent {
     
     // Short code
     const shortCodeTd = createElement('td', { className: 'short-code-cell' });
+    const shortUrl = await generateShortUrl(link.shortCode || link.id);
     const shortCodeLink = createElement('a', {
       textContent: link.shortCode || link.id,
       attributes: {
-        href: `/${link.shortCode}`,
+        href: shortUrl,
         target: '_blank',
         title: 'Open short link'
       },
@@ -402,9 +403,21 @@ export class LinkListComponent extends BaseComponent {
     const actionsTd = createElement('td', { className: 'actions-cell' });
     const actionsContainer = createElement('div', { className: 'table-actions' });
     
+    // Edit button
+    const editBtn = this.createButton('Edit', 'btn btn-sm btn-primary', () => {
+      this.config.onEdit(link);
+    });
+    editBtn.setAttribute('title', 'Edit link');
+
+    // Delete button
+    const deleteBtn = this.createButton('Delete', 'btn btn-sm btn-danger', () => {
+      this.config.onDelete(link);
+    });
+    deleteBtn.setAttribute('title', 'Delete link');
+
     // Copy button (functional)
-    const copyBtn = this.createButton('Copy', 'btn btn-sm btn-secondary', () => {
-      const shortUrl = `${window.location.origin}/${link.shortCode}`;
+    const copyBtn = this.createButton('Copy', 'btn btn-sm btn-secondary', async () => {
+      const shortUrl = await generateShortUrl(link.shortCode || link.id);
       this.copyToClipboard(shortUrl);
     });
     copyBtn.setAttribute('title', 'Copy short link to clipboard');
@@ -415,6 +428,8 @@ export class LinkListComponent extends BaseComponent {
     });
     analyticsBtn.setAttribute('title', 'View link analytics (coming soon)');
 
+    actionsContainer.appendChild(editBtn);
+    actionsContainer.appendChild(deleteBtn);
     actionsContainer.appendChild(copyBtn);
     actionsContainer.appendChild(analyticsBtn);
     actionsTd.appendChild(actionsContainer);
@@ -423,18 +438,19 @@ export class LinkListComponent extends BaseComponent {
     return row;
   }
 
-  private renderCards(container: HTMLElement): void {
+  private async renderCards(container: HTMLElement): Promise<void> {
     const cardsGrid = createElement('div', { className: 'links-cards-grid' });
-    
-    this.filteredLinks.forEach(link => {
-      const card = this.createLinkCard(link);
+
+    // Create cards asynchronously to handle short URL generation
+    for (const link of this.filteredLinks) {
+      const card = await this.createLinkCard(link);
       cardsGrid.appendChild(card);
-    });
-    
+    }
+
     container.appendChild(cardsGrid);
   }
 
-  private createLinkCard(link: Link): HTMLElement {
+  private async createLinkCard(link: Link): Promise<HTMLElement> {
     const card = createElement('div', { 
       className: `link-card ${this.selection.selectedIds.has(link.id) ? 'selected' : ''}`
     });
@@ -453,9 +469,21 @@ export class LinkListComponent extends BaseComponent {
     
     const actions = createElement('div', { className: 'card-actions' });
 
+    // Edit button
+    const editBtn = this.createButton('Edit', 'btn btn-sm btn-primary', () => {
+      this.config.onEdit(link);
+    });
+    editBtn.setAttribute('title', 'Edit link');
+
+    // Delete button
+    const deleteBtn = this.createButton('Delete', 'btn btn-sm btn-danger', () => {
+      this.config.onDelete(link);
+    });
+    deleteBtn.setAttribute('title', 'Delete link');
+
     // Copy button (functional)
-    const copyBtn = this.createButton('Copy', 'btn btn-sm btn-secondary', () => {
-      const shortUrl = `${window.location.origin}/${link.shortCode}`;
+    const copyBtn = this.createButton('Copy', 'btn btn-sm btn-secondary', async () => {
+      const shortUrl = await generateShortUrl(link.shortCode || link.id);
       this.copyToClipboard(shortUrl);
     });
     copyBtn.setAttribute('title', 'Copy short link to clipboard');
@@ -466,6 +494,8 @@ export class LinkListComponent extends BaseComponent {
     });
     analyticsBtn.setAttribute('title', 'View link analytics (coming soon)');
 
+    actions.appendChild(editBtn);
+    actions.appendChild(deleteBtn);
     actions.appendChild(copyBtn);
     actions.appendChild(analyticsBtn);
     
@@ -477,10 +507,11 @@ export class LinkListComponent extends BaseComponent {
     
     // Short code
     const shortCode = createElement('div', { className: 'card-short-code' });
+    const shortUrl = await generateShortUrl(link.shortCode || link.id);
     const shortCodeLink = createElement('a', {
       textContent: link.shortCode || link.id,
-      attributes: { 
-        href: `/${link.shortCode}`,
+      attributes: {
+        href: shortUrl,
         target: '_blank'
       },
       className: 'short-link'
@@ -535,9 +566,9 @@ export class LinkListComponent extends BaseComponent {
     return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
   }
 
-  private setViewMode(mode: 'table' | 'cards'): void {
+  private async setViewMode(mode: 'table' | 'cards'): Promise<void> {
     this.viewMode = mode;
-    
+
     // Update button states
     const buttons = querySelectorAll('.view-btn', this.container);
     buttons.forEach(btn => {
@@ -546,8 +577,8 @@ export class LinkListComponent extends BaseComponent {
         btn.classList.add('active');
       }
     });
-    
-    this.renderLinks();
+
+    await this.renderLinks();
   }
 
   private handleSort(field: string): void {

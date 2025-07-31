@@ -1,6 +1,7 @@
 import { BaseComponent } from './base-component.js';
 import { ApiClient } from '../services/api-client.js';
 import { createElement } from '../utils/dom-helpers.js';
+import { generateShortUrl } from '../utils/data-transformers.js';
 import type { Link, CreateLinkRequest, Project } from '../types/api.js';
 
 export class LinkManager extends BaseComponent {
@@ -160,10 +161,15 @@ export class LinkManager extends BaseComponent {
     const shortUrl = createElement('a', {
       textContent: `/${link.shortCode}`,
       className: 'short-url',
-      attributes: { 
-        href: `/${link.shortCode}`,
+      attributes: {
+        href: `/${link.shortCode}`, // This will be updated dynamically
         target: '_blank'
       }
+    });
+
+    // Update href with correct domain asynchronously
+    generateShortUrl(link.shortCode || link.id).then(fullUrl => {
+      shortUrl.setAttribute('href', fullUrl);
     });
     
     header.appendChild(title);
@@ -216,8 +222,9 @@ export class LinkManager extends BaseComponent {
     // Actions
     const actions = createElement('div', { className: 'link-actions' });
     
-    const copyBtn = this.createButton('Copy', 'btn btn-secondary btn-sm', () => {
-      this.copyToClipboard(`${window.location.origin}/${link.shortCode}`);
+    const copyBtn = this.createButton('Copy', 'btn btn-secondary btn-sm', async () => {
+      const shortUrl = await generateShortUrl(link.shortCode || link.id);
+      this.copyToClipboard(shortUrl);
     });
     
     const analyticsBtn = this.createButton('Analytics', 'btn btn-primary btn-sm', () => {

@@ -2,7 +2,7 @@ import { BaseComponent } from './base-component.js';
 import { ApiClient } from '../services/api-client.js';
 import { AuthService } from '../services/auth-service.js';
 import { createElement, querySelector } from '../utils/dom-helpers.js';
-import type { Project, CreateProjectRequest } from '../types/api.js';
+import type { Project, CreateProjectRequest, EditProjectRequest } from '../types/api.js';
 
 export class ProjectManager extends BaseComponent {
   private apiClient: ApiClient;
@@ -139,7 +139,7 @@ export class ProjectManager extends BaseComponent {
     });
     
     const editBtn = this.createButton('Edit', 'btn btn-secondary', () => {
-      this.emit('project:edit', project);
+      this.showEditProjectModal(project);
     });
 
     actions.appendChild(viewLinksBtn);
@@ -158,6 +158,14 @@ export class ProjectManager extends BaseComponent {
     const modalContent = this.createProjectForm();
     this.emit('modal:show', {
       title: 'Create New Project',
+      content: modalContent
+    });
+  }
+
+  showEditProjectModal(project: Project): void {
+    const modalContent = this.createEditProjectForm(project);
+    this.emit('modal:show', {
+      title: `Edit Project: ${project.name}`,
       content: modalContent
     });
   }
@@ -255,6 +263,108 @@ export class ProjectManager extends BaseComponent {
     return form;
   }
 
+  private createEditProjectForm(project: Project): HTMLElement {
+    const form = createElement('form', { id: 'edit-project-form' });
+
+    // Project name
+    const nameInput = this.createInput('text', 'Enter project name', project.name, true);
+    nameInput.name = 'name';
+    const nameGroup = this.createFormGroup(
+      'Project Name:',
+      nameInput,
+      'project-name',
+      'A unique name for your project. This will help you identify it in your dashboard.'
+    );
+
+    // Base URL
+    const baseUrlInput = this.createInput('url', 'https://example.com', project.baseUrl, false);
+    baseUrlInput.name = 'baseUrl';
+    const baseUrlGroup = this.createFormGroup(
+      'Base URL:',
+      baseUrlInput,
+      'base-url',
+      'The main website URL where users will be redirected. Example: https://mywebsite.com'
+    );
+
+    // Fallback URL
+    const fallbackUrlInput = this.createInput('url', 'https://example.com/fallback', project.fallbackUrl, false);
+    fallbackUrlInput.name = 'fallbackUrl';
+    const fallbackUrlGroup = this.createFormGroup(
+      'Fallback URL:',
+      fallbackUrlInput,
+      'fallback-url',
+      'Backup URL used when the main URL is not accessible or for desktop users. Example: https://mywebsite.com/home'
+    );
+
+    // iOS App Store ID (optional)
+    const appstoreIdInput = this.createInput('text', '123456789', project.appstoreId || '');
+    appstoreIdInput.name = 'appstoreId';
+    const appstoreIdGroup = this.createFormGroup(
+      'iOS App Store ID (optional):',
+      appstoreIdInput,
+      'appstore-id',
+      'The numeric ID of your iOS app in the App Store. Found in your app\'s App Store URL. Example: 123456789'
+    );
+
+    // Android Package Name (optional)
+    const playstoreIdInput = this.createInput('text', 'com.example.app', project.playstoreId || '');
+    playstoreIdInput.name = 'playstoreId';
+    const playstoreIdGroup = this.createFormGroup(
+      'Android Package Name (optional):',
+      playstoreIdInput,
+      'playstore-id',
+      'Your Android app\'s package name from Google Play Store. Example: com.mycompany.myapp'
+    );
+
+    // iOS URL Scheme (optional)
+    const iosSchemeInput = this.createInput('text', 'myapp://', project.iosScheme || '');
+    iosSchemeInput.name = 'iosScheme';
+    const iosSchemeGroup = this.createFormGroup(
+      'iOS URL Scheme (optional):',
+      iosSchemeInput,
+      'ios-scheme',
+      'Custom URL scheme for deep linking to your iOS app. Example: myapp:// or myapp://page'
+    );
+
+    // Android URL Scheme (optional)
+    const androidSchemeInput = this.createInput('text', 'myapp://', project.androidScheme || '');
+    androidSchemeInput.name = 'androidScheme';
+    const androidSchemeGroup = this.createFormGroup(
+      'Android URL Scheme (optional):',
+      androidSchemeInput,
+      'android-scheme',
+      'Custom URL scheme for deep linking to your Android app. Example: myapp:// or myapp://page'
+    );
+
+    // Submit button
+    const submitButton = this.createButton('Update Project', 'btn btn-primary');
+    submitButton.type = 'submit';
+
+    // Cancel button
+    const cancelButton = this.createButton('Cancel', 'btn btn-secondary', () => {
+      this.emit('modal:hide');
+    });
+
+    const buttonGroup = createElement('div', { className: 'button-group' });
+    buttonGroup.appendChild(cancelButton);
+    buttonGroup.appendChild(submitButton);
+
+    // Assemble form
+    form.appendChild(nameGroup);
+    form.appendChild(baseUrlGroup);
+    form.appendChild(fallbackUrlGroup);
+    form.appendChild(appstoreIdGroup);
+    form.appendChild(playstoreIdGroup);
+    form.appendChild(iosSchemeGroup);
+    form.appendChild(androidSchemeGroup);
+    form.appendChild(buttonGroup);
+
+    // Add form submit handler
+    form.addEventListener('submit', (event) => this.handleEditProject(event, project));
+
+    return form;
+  }
+
   private async handleCreateProject(event: Event): Promise<void> {
     event.preventDefault();
     
@@ -298,6 +408,79 @@ export class ProjectManager extends BaseComponent {
     } catch (error) {
       console.error('Failed to create project:', error);
       this.showError('Failed to create project. Please try again.');
+    } finally {
+      this.setLoading(false, form);
+    }
+  }
+
+  private async handleEditProject(event: Event, project: Project): Promise<void> {
+    event.preventDefault();
+
+    const form = event.target as HTMLFormElement;
+    const formData = new FormData(form);
+
+    const editData: EditProjectRequest = {};
+
+    // Only include fields that have values and are different from current values
+    const name = formData.get('name') as string;
+    if (name && name !== project.name) {
+      editData.name = name;
+    }
+
+    const baseUrl = formData.get('baseUrl') as string;
+    if (baseUrl && baseUrl !== project.baseUrl) {
+      editData.baseUrl = baseUrl;
+    }
+
+    const fallbackUrl = formData.get('fallbackUrl') as string;
+    if (fallbackUrl && fallbackUrl !== project.fallbackUrl) {
+      editData.fallbackUrl = fallbackUrl;
+    }
+
+    const appstoreId = formData.get('appstoreId') as string;
+    if (appstoreId !== (project.appstoreId || '')) {
+      editData.appstoreId = appstoreId || undefined;
+    }
+
+    const playstoreId = formData.get('playstoreId') as string;
+    if (playstoreId !== (project.playstoreId || '')) {
+      editData.playstoreId = playstoreId || undefined;
+    }
+
+    const iosScheme = formData.get('iosScheme') as string;
+    if (iosScheme !== (project.iosScheme || '')) {
+      editData.iosScheme = iosScheme || undefined;
+    }
+
+    const androidScheme = formData.get('androidScheme') as string;
+    if (androidScheme !== (project.androidScheme || '')) {
+      editData.androidScheme = androidScheme || undefined;
+    }
+
+    // Check if any changes were made
+    if (Object.keys(editData).length === 0) {
+      this.showInfo('No changes detected.');
+      return;
+    }
+
+    try {
+      this.setLoading(true, form);
+
+      const updatedProject = await this.apiClient.editProject(project.id, editData);
+
+      // Update the project in the local array
+      const projectIndex = this.projects.findIndex(p => p.id === project.id);
+      if (projectIndex !== -1) {
+        this.projects[projectIndex] = updatedProject;
+        this.renderProjectsList();
+      }
+
+      this.emit('modal:hide');
+      this.showSuccess('Project updated successfully!');
+
+    } catch (error) {
+      console.error('Failed to edit project:', error);
+      this.showError('Failed to update project. Please try again.');
     } finally {
       this.setLoading(false, form);
     }

@@ -61,6 +61,22 @@ export interface UpdateLinkRequest {
   fallbackUrlOverride?: string;
   additionalMetadata?: Record<string, any>;
   properties?: Record<string, any>;
+  active?: boolean;
+}
+
+export interface DeleteLinkRequest {
+  projectId: string;
+  apiKey: string;
+}
+
+export interface EditProjectRequest {
+  name?: string;
+  baseUrl?: string;
+  fallbackUrl?: string;
+  appstoreId?: string;
+  playstoreId?: string;
+  iosScheme?: string;
+  androidScheme?: string;
 }
 
 // UI-specific types for filtering, sorting, and pagination

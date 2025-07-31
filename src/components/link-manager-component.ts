@@ -179,9 +179,8 @@ export class LinkManagerComponent extends BaseComponent {
         throw new Error('Project not found for this link');
       }
 
-      await this.apiClient.deleteLink({
-        id: link.id,
-        projectId: link.projectId,
+      await this.apiClient.deleteLink(link.id, {
+        projectId: link.projectId || project.id,
         apiKey: project.apiKey
       });
 
@@ -222,8 +221,7 @@ export class LinkManagerComponent extends BaseComponent {
           // In practice, you might want to batch this or store project info with links
           for (const project of this.projects) {
             try {
-              await this.apiClient.deleteLink({
-                id: linkId,
+              await this.apiClient.deleteLink(linkId, {
                 projectId: project.id,
                 apiKey: project.apiKey
               });

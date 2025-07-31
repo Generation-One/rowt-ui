@@ -240,10 +240,7 @@ export class App {
         // TODO: Switch to links tab and filter by project
       });
 
-      this.projectManager.on('project:edit', (project) => {
-        console.log('Edit project:', project);
-        // TODO: Show edit project modal
-      });
+
 
       this.projectManager.on('modal:show', (config) => {
         this.showModal(config.title, config.content);

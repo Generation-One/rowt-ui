@@ -4,13 +4,16 @@ import type {
   User,
   Project,
   CreateProjectRequest,
+  EditProjectRequest,
   Link,
+  UpdateLinkRequest,
+  DeleteLinkRequest,
   GetLinksRequest,
   GetLinksResponse,
   DashboardStats
 } from '../types/api.js';
 import { getRowtSDK, RowtSDKError } from './rowt-sdk-service.js';
-import { transformLinks, transformProjects } from '../utils/data-transformers.js';
+import { transformLink, transformLinks, transformProjects } from '../utils/data-transformers.js';
 
 /**
  * ApiClient - Compatibility wrapper around the Rowt SDK
@@ -122,6 +125,40 @@ export class ApiClient {
       if (error instanceof RowtSDKError) {
         throw new Error(error.message);
       }
+      throw error;
+    }
+  }
+
+  async editProject(projectId: string, projectData: EditProjectRequest): Promise<Project> {
+    try {
+      await this.ensureInitialized();
+
+      // Make direct API call to update project using JWT authentication
+      const config = await import('../config/app-config.js').then(m => m.getAppConfig());
+      const token = this.sdkService.getTokens()?.accessToken;
+
+      if (!token) {
+        throw new Error('Authentication required. Please log in.');
+      }
+
+      const response = await fetch(`${config.apiEndpoint}/projects/${projectId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(projectData)
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || `HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const result = await response.json();
+      return result.project;
+    } catch (error) {
+      console.error('Failed to edit project:', error);
       throw error;
     }
   }
@@ -333,16 +370,60 @@ export class ApiClient {
   }
 
   // Link management operations via direct API calls
-  async updateLink(linkData: any): Promise<Link> {
-    // For now, link updates are not supported in the basic API
-    // This would require additional endpoints on the server
-    throw new Error('Link updates are not currently supported. Please delete and recreate the link if needed.');
+  async updateLink(linkData: UpdateLinkRequest): Promise<Link> {
+    try {
+      await this.ensureInitialized();
+
+      // Make direct API call to update link using project API key
+      const config = await import('../config/app-config.js').then(m => m.getAppConfig());
+      const { id, ...updateData } = linkData;
+
+      const response = await fetch(`${config.apiEndpoint}/link/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(updateData)
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || `HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const result = await response.json();
+      return transformLink(result.link, linkData.projectId);
+    } catch (error) {
+      console.error('Failed to update link:', error);
+      throw error;
+    }
   }
 
-  async deleteLink(deleteData: any): Promise<void> {
-    // For now, link deletion is not supported in the basic API
-    // This would require additional endpoints on the server
-    throw new Error('Link deletion is not currently supported via the console. Links will expire based on server configuration.');
+  async deleteLink(linkId: string, deleteData: DeleteLinkRequest): Promise<void> {
+    try {
+      await this.ensureInitialized();
+
+      // Make direct API call to delete link using project API key
+      const config = await import('../config/app-config.js').then(m => m.getAppConfig());
+
+      const response = await fetch(`${config.apiEndpoint}/link/${linkId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(deleteData)
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || `HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      // Delete operation successful - no return value needed
+    } catch (error) {
+      console.error('Failed to delete link:', error);
+      throw error;
+    }
   }
 
   async bulkLinkOperation(operation: any): Promise<{ success: number; failed: number; errors?: string[] }> {

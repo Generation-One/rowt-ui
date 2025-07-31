@@ -58,6 +58,21 @@ export function generateShortCode(linkId: string): string {
 }
 
 /**
+ * Generate the full short URL using the API endpoint domain
+ * This ensures short URLs point to the API server, not the UI domain
+ */
+export async function generateShortUrl(shortCode: string): Promise<string> {
+  try {
+    const config = await import('../config/app-config.js').then(m => m.getAppConfig());
+    return `${config.apiEndpoint}/${shortCode}`;
+  } catch (error) {
+    console.error('Failed to get API endpoint for short URL:', error);
+    // Fallback to current origin if config fails
+    return `${window.location.origin}/${shortCode}`;
+  }
+}
+
+/**
  * Extract project ID from link data when available
  */
 export function extractProjectId(link: any): string | undefined {
