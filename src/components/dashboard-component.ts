@@ -331,13 +331,44 @@ export class DashboardComponent extends BaseComponent {
 
   private async loadOverviewData(): Promise<void> {
     try {
-      const health = await this.apiClient.getHealth();
+      // Load dashboard stats
+      const stats = await this.apiClient.getDashboardStats();
+
+      // Update stats in the UI
+      const totalProjectsElement = querySelector('#total-projects', this.container);
+      const totalLinksElement = querySelector('#total-links', this.container);
+      const totalClicksElement = querySelector('#total-clicks', this.container);
       const serverStatusElement = querySelector('#server-status', this.container);
-      if (serverStatusElement) {
-        serverStatusElement.textContent = health.status;
+
+      if (totalProjectsElement) {
+        totalProjectsElement.textContent = stats.totalProjects.toString();
       }
+
+      if (totalLinksElement) {
+        totalLinksElement.textContent = stats.totalLinks.toString();
+      }
+
+      if (totalClicksElement) {
+        totalClicksElement.textContent = stats.totalClicks.toLocaleString();
+      }
+
+      if (serverStatusElement) {
+        serverStatusElement.textContent = stats.serverStatus;
+        serverStatusElement.className = `stat-number ${stats.serverStatus === 'ok' ? 'status-ok' : 'status-error'}`;
+      }
+
     } catch (error) {
       console.error('Failed to load overview data:', error);
+
+      // Show error state in stats
+      const elements = ['#total-projects', '#total-links', '#total-clicks', '#server-status'];
+      elements.forEach(selector => {
+        const element = querySelector(selector, this.container);
+        if (element) {
+          element.textContent = 'Error';
+          element.className = 'stat-number status-error';
+        }
+      });
     }
   }
 
@@ -348,6 +379,7 @@ export class DashboardComponent extends BaseComponent {
         break;
       case 'projects':
         this.emit('projects:load');
+        this.loadProjectsStats();
         break;
       case 'links':
         this.loadLinksData();
@@ -355,6 +387,22 @@ export class DashboardComponent extends BaseComponent {
       case 'analytics':
         // Analytics loading logic
         break;
+    }
+  }
+
+  private async loadProjectsStats(): Promise<void> {
+    try {
+      const projects = await this.apiClient.getUserProjects();
+      const projectsStatValue = querySelector('.projects-stat-value', this.container);
+      if (projectsStatValue) {
+        projectsStatValue.textContent = projects.length.toString();
+      }
+    } catch (error) {
+      console.error('Failed to load projects stats:', error);
+      const projectsStatValue = querySelector('.projects-stat-value', this.container);
+      if (projectsStatValue) {
+        projectsStatValue.textContent = 'Error';
+      }
     }
   }
 

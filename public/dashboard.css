@@ -678,6 +678,16 @@ body {
   color: #333;
 }
 
+.stat-number.status-ok {
+  color: #10b981;
+  text-transform: capitalize;
+}
+
+.stat-number.status-error {
+  color: #ef4444;
+  text-transform: capitalize;
+}
+
 /* Welcome Section */
 .welcome-section {
   background: white;

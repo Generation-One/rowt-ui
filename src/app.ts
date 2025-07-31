@@ -278,24 +278,27 @@ export class App {
     show(this.modalOverlay);
   }
 
+  private modalMouseDownTarget: EventTarget | null = null;
+
   private setupModalCloseHandler(): void {
     if (!this.modalOverlay) return;
 
-    // Use event delegation to handle close button clicks
-    // This ensures it works even when modal content is replaced
+    // Remove existing event listeners to avoid duplicates
+    this.modalOverlay.removeEventListener('mousedown', this.handleModalMouseDown);
     this.modalOverlay.removeEventListener('click', this.handleModalClick);
+
+    // Add event listeners for proper modal closing behavior
+    this.modalOverlay.addEventListener('mousedown', this.handleModalMouseDown);
     this.modalOverlay.addEventListener('click', this.handleModalClick);
   }
 
+  private handleModalMouseDown = (event: MouseEvent): void => {
+    // Track where the mouse was initially pressed
+    this.modalMouseDownTarget = event.target;
+  };
+
   private handleModalClick = (event: Event): void => {
     const target = event.target as HTMLElement;
-
-    // Close on overlay click (but not on modal content)
-    if (target === this.modalOverlay) {
-      console.log('Modal overlay clicked');
-      this.hideModal();
-      return;
-    }
 
     // Close on close button click
     if (target.classList.contains('modal-close') || target.closest('.modal-close')) {
@@ -305,6 +308,31 @@ export class App {
       this.hideModal();
       return;
     }
+
+    // Only close on overlay click if both mousedown and mouseup happened on the overlay
+    // This prevents accidental closing when dragging from inside the modal to outside
+    if (target === this.modalOverlay && this.modalMouseDownTarget === this.modalOverlay) {
+      console.log('Modal overlay clicked (mousedown and mouseup both on overlay)');
+      this.hideModal();
+      return;
+    }
+  };
+
+  private setupModalKeyboardHandler(): void {
+    if (!this.modalOverlay) return;
+
+    // Remove existing keyboard handler to avoid duplicates
+    document.removeEventListener('keydown', this.handleModalKeydown);
+    document.addEventListener('keydown', this.handleModalKeydown);
+  }
+
+  private handleModalKeydown = (event: KeyboardEvent): void => {
+    // Close modal on Escape key
+    if (event.key === 'Escape' && this.modalOverlay && !this.modalOverlay.classList.contains('hidden')) {
+      console.log('Escape key pressed, closing modal');
+      event.preventDefault();
+      this.hideModal();
+    }
   };
 
   private hideModal(): void {
@@ -313,6 +341,11 @@ export class App {
       console.log('No modal overlay found');
       return;
     }
+
+    // Clean up event listeners and state
+    document.removeEventListener('keydown', this.handleModalKeydown);
+    this.modalMouseDownTarget = null;
+
     hide(this.modalOverlay);
     console.log('Modal hidden');
   }
