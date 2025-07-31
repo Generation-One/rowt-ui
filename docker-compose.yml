@@ -29,7 +29,6 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.dev
-      target: development
     container_name: rowt-ui-dev
     ports:
       - "8080:8080"
