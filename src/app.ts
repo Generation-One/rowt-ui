@@ -86,18 +86,8 @@ export class App {
 
     // Modal close events
     if (this.modalOverlay) {
-      this.modalOverlay.addEventListener('click', (event) => {
-        if (event.target === this.modalOverlay) {
-          this.hideModal();
-        }
-      });
-
-      const closeButton = this.modalOverlay.querySelector('.modal-close');
-      if (closeButton) {
-        closeButton.addEventListener('click', () => {
-          this.hideModal();
-        });
-      }
+      // Setup modal close handler using event delegation
+      this.setupModalCloseHandler();
     }
   }
 
@@ -270,7 +260,7 @@ export class App {
 
     if (modalTitle && modalBody) {
       modalTitle.textContent = title;
-      
+
       if (typeof content === 'string') {
         modalBody.innerHTML = content;
       } else {
@@ -279,12 +269,52 @@ export class App {
       }
     }
 
+    // Ensure close button event listener is attached
+    this.setupModalCloseHandler();
+
+    // Add keyboard support for closing modal
+    this.setupModalKeyboardHandler();
+
     show(this.modalOverlay);
   }
 
-  private hideModal(): void {
+  private setupModalCloseHandler(): void {
     if (!this.modalOverlay) return;
+
+    // Use event delegation to handle close button clicks
+    // This ensures it works even when modal content is replaced
+    this.modalOverlay.removeEventListener('click', this.handleModalClick);
+    this.modalOverlay.addEventListener('click', this.handleModalClick);
+  }
+
+  private handleModalClick = (event: Event): void => {
+    const target = event.target as HTMLElement;
+
+    // Close on overlay click (but not on modal content)
+    if (target === this.modalOverlay) {
+      console.log('Modal overlay clicked');
+      this.hideModal();
+      return;
+    }
+
+    // Close on close button click
+    if (target.classList.contains('modal-close') || target.closest('.modal-close')) {
+      console.log('Modal close button clicked');
+      event.preventDefault();
+      event.stopPropagation();
+      this.hideModal();
+      return;
+    }
+  };
+
+  private hideModal(): void {
+    console.log('Hiding modal...');
+    if (!this.modalOverlay) {
+      console.log('No modal overlay found');
+      return;
+    }
     hide(this.modalOverlay);
+    console.log('Modal hidden');
   }
 
   private hideLoading(): void {

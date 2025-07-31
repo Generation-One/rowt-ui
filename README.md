@@ -78,18 +78,51 @@ The application works on subpaths without any configuration changes:
 
 ### Docker Deployment
 
-The application includes Docker support for easy deployment:
+The application includes comprehensive Docker support with multiple deployment options:
 
-**Quick Start:**
+#### Quick Start with Docker Compose
+
+**Development Mode (with hot reloading):**
 ```bash
-# Build and run with Docker Compose
-docker-compose up -d
+# Using Makefile (recommended)
+make dev
 
-# Or use the production configuration
+# Or directly with docker-compose
+docker-compose up -d rowt-ui-dev
+```
+Access at: `http://localhost:8080`
+
+**Production Mode:**
+```bash
+# Using Makefile (recommended)
+make prod
+
+# Or directly with docker-compose
 docker-compose -f docker-compose.prod.yml up -d
 ```
+Access at: `http://localhost:3000`
 
-**Manual Build:**
+#### Available Docker Compose Files
+
+- `docker-compose.yml` - Base configuration
+- `docker-compose.override.yml` - Development overrides (auto-loaded)
+- `docker-compose.prod.yml` - Production configuration with Nginx
+
+#### Makefile Commands
+
+```bash
+make help          # Show all available commands
+make dev           # Start development environment
+make prod          # Start production environment
+make build         # Build all images
+make stop          # Stop all containers
+make clean         # Clean up containers and images
+make logs          # View container logs
+make health        # Check container health
+```
+
+#### Manual Docker Build
+
 ```bash
 # Build the Docker image
 docker build -t rowt-ui:latest .
@@ -98,18 +131,16 @@ docker build -t rowt-ui:latest .
 docker run -d -p 80:80 --name rowt-ui rowt-ui:latest
 ```
 
-**Using the build script:**
-```bash
-# Make executable and run
-chmod +x docker-build.sh
-./docker-build.sh
-```
+#### Features
 
-The Docker setup includes:
-- **Multi-stage build** for optimized image size
-- **Nginx** for serving static files with proper caching
+- **Multi-stage builds** for optimized image sizes
+- **Development mode** with hot reloading and volume mounting
+- **Production mode** with Nginx for optimal performance
 - **Health checks** for container monitoring
+- **Traefik integration** for reverse proxy and SSL
 - **Security headers** and performance optimizations
+
+See [DOCKER.md](DOCKER.md) for detailed Docker documentation.
 
 ## Development
 
