@@ -1,35 +1,19 @@
-version: '3.8'
-
 services:
   rowt-ui:
     build:
       context: .
       dockerfile: Dockerfile
       args:
-        - ROWT_API_ENDPOINT=${ROWT_API_ENDPOINT:-https://your-rowt-server.com}
+        - ROWT_API_ENDPOINT=${ROWT_API_ENDPOINT}
         - NODE_ENV=${NODE_ENV:-production}
         - BUILD_MODE=${BUILD_MODE:-production}
     container_name: rowt-ui
     ports:
       - "${HOST_PORT:-3000}:${CONTAINER_PORT:-80}"
-    volumes:
-      # Conditional volume mounting for development
-      - ${SOURCE_MOUNT:-/tmp/empty}:/app
-      - ${NODE_MODULES_MOUNT:-/tmp/empty}:/app/node_modules
     environment:
       - NODE_ENV=${NODE_ENV:-production}
       - BUILD_MODE=${BUILD_MODE:-production}
     restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "sh", "-c", "if [ \"$BUILD_MODE\" = \"development\" ]; then curl -f http://localhost:8080/ || exit 1; else wget --no-verbose --tries=1 --spider http://localhost/ || exit 1; fi"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
-    labels:
-      - "traefik.enable=${TRAEFIK_ENABLE:-false}"
-      - "traefik.http.routers.rowt-ui.rule=Host(`${TRAEFIK_HOST:-rowt-ui.localhost}`)"
-      - "traefik.http.services.rowt-ui.loadbalancer.server.port=${CONTAINER_PORT:-80}"
     networks:
       - rowt-network
 

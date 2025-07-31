@@ -17,17 +17,31 @@ RUN npm ci
 COPY . .
 
 # Set build-time environment variables
-ARG ROWT_API_ENDPOINT=https://your-rowt-server.com
+ARG ROWT_API_ENDPOINT
 ARG NODE_ENV=production
 ARG BUILD_MODE=production
+
+# Validate required arguments
+RUN if [ -z "$ROWT_API_ENDPOINT" ]; then \
+      echo "❌ ERROR: ROWT_API_ENDPOINT is required but not provided"; \
+      echo "   Please set ROWT_API_ENDPOINT when building:"; \
+      echo "   docker-compose build --build-arg ROWT_API_ENDPOINT=https://your-server.com"; \
+      exit 1; \
+    fi
 
 # Create .env file for build process
 RUN echo "ROWT_API_ENDPOINT=${ROWT_API_ENDPOINT}" > .env && \
     echo "NODE_ENV=${NODE_ENV}" >> .env
 
 # Conditional build based on BUILD_MODE
-RUN if [ "$BUILD_MODE" = "production" ]; then \
-      npm run build; \
+RUN echo "BUILD_MODE is: $BUILD_MODE" && \
+    if [ "$BUILD_MODE" = "production" ]; then \
+      echo "🔧 Running production build..." && \
+      npm run build && \
+      echo "✅ Production build complete" && \
+      ls -la dist/ || echo "❌ Build failed - no dist directory"; \
+    else \
+      echo "🔧 Skipping build for development mode"; \
     fi
 
 # Copy entrypoint script

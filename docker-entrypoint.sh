@@ -24,11 +24,19 @@ else
     mkdir -p /var/lib/nginx/tmp
     
     # Copy built application
+    echo "🔍 Checking for dist directory..."
+    ls -la
     if [ -d "dist" ]; then
-        echo "📁 Copying application files..."
+        echo "📁 Found dist directory, copying application files..."
+        ls -la dist/
         cp -r dist/* /usr/share/nginx/html/
+        echo "✅ Application files copied to Nginx"
     else
         echo "❌ No dist directory found. Make sure the application was built."
+        echo "🔍 Current directory contents:"
+        ls -la
+        echo "🔍 BUILD_MODE: $BUILD_MODE"
+        echo "🔍 NODE_ENV: $NODE_ENV"
         exit 1
     fi
     

@@ -29,6 +29,12 @@ help:
 # Development commands
 dev:
 	@echo "Starting development environment..."
+	@if [ -z "$$ROWT_API_ENDPOINT" ]; then \
+		echo "❌ ERROR: ROWT_API_ENDPOINT environment variable is required"; \
+		echo "   Set it first: export ROWT_API_ENDPOINT=https://your-server.com"; \
+		echo "   Or create a .env file with ROWT_API_ENDPOINT=https://your-server.com"; \
+		exit 1; \
+	fi
 	BUILD_MODE=development docker-compose up -d rowt-ui
 	@echo "Development server available at http://localhost:8080"
 
@@ -44,7 +50,13 @@ dev-logs:
 # Production commands
 prod:
 	@echo "Starting production environment..."
-	BUILD_MODE=production docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d rowt-ui
+	@if [ -z "$$ROWT_API_ENDPOINT" ]; then \
+		echo "❌ ERROR: ROWT_API_ENDPOINT environment variable is required"; \
+		echo "   Set it first: export ROWT_API_ENDPOINT=https://your-server.com"; \
+		echo "   Or create a .env file with ROWT_API_ENDPOINT=https://your-server.com"; \
+		exit 1; \
+	fi
+	BUILD_MODE=production docker-compose up -d rowt-ui
 	@echo "Production server available at http://localhost:3000"
 
 prod-build:

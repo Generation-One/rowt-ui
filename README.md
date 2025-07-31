@@ -82,6 +82,15 @@ The application includes comprehensive Docker support with multiple deployment o
 
 #### Quick Start with Docker Compose
 
+**Prerequisites:**
+```bash
+# REQUIRED: Set your Rowt server API endpoint
+export ROWT_API_ENDPOINT=https://your-rowt-server.com
+
+# Or create a .env file
+echo "ROWT_API_ENDPOINT=https://your-rowt-server.com" > .env
+```
+
 **Development Mode (with hot reloading):**
 ```bash
 # Using Makefile (recommended)
@@ -98,7 +107,7 @@ Access at: `http://localhost:8080`
 make prod
 
 # Or directly with docker-compose
-BUILD_MODE=production docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d rowt-ui
+BUILD_MODE=production docker-compose up -d rowt-ui
 ```
 Access at: `http://localhost:3000`
 
