@@ -28,7 +28,7 @@ if not exist .env (
         copy .env.ui.example .env >nul
         echo ✅ Created .env from .env.ui.example
     ) else (
-        echo ROWT_API_ENDPOINT=https://route.generation.one > .env
+        echo ROWT_API_ENDPOINT=https://your-rowt-server.com > .env
         echo NODE_ENV=development >> .env
         echo ✅ Created basic .env file
     )

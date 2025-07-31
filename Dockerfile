@@ -4,14 +4,25 @@ FROM node:18-alpine AS builder
 # Set working directory
 WORKDIR /app
 
+# Install build dependencies
+RUN apk add --no-cache wget
+
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies
-RUN npm ci --only=production
+# Install all dependencies (including dev dependencies for build)
+RUN npm ci
 
 # Copy source code
 COPY . .
+
+# Set build-time environment variables
+ARG ROWT_API_ENDPOINT=https://your-rowt-server.com
+ARG NODE_ENV=production
+
+# Create .env file for build process
+RUN echo "ROWT_API_ENDPOINT=${ROWT_API_ENDPOINT}" > .env && \
+    echo "NODE_ENV=${NODE_ENV}" >> .env
 
 # Build the application
 RUN npm run build

@@ -6,6 +6,9 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        - ROWT_API_ENDPOINT=${ROWT_API_ENDPOINT:-https://your-rowt-server.com}
+        - NODE_ENV=${NODE_ENV:-production}
     container_name: rowt-ui-prod
     ports:
       - "80:80"

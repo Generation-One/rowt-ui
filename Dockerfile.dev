@@ -13,8 +13,18 @@ COPY package*.json ./
 # Install all dependencies (including dev dependencies)
 RUN npm ci
 
+# Set build-time environment variables with defaults
+ARG ROWT_API_ENDPOINT=https://your-rowt-server.com
+ARG NODE_ENV=development
+
 # Copy source code
 COPY . .
+
+# Create .env file if it doesn't exist
+RUN if [ ! -f .env ]; then \
+      echo "ROWT_API_ENDPOINT=${ROWT_API_ENDPOINT}" > .env && \
+      echo "NODE_ENV=${NODE_ENV}" >> .env; \
+    fi
 
 # Expose development port
 EXPOSE 8080

@@ -48,7 +48,7 @@ if [ ! -f .env ]; then
         cp .env.ui.example .env
         print_status "Created .env from .env.ui.example"
     else
-        echo "ROWT_API_ENDPOINT=https://route.generation.one" > .env
+        echo "ROWT_API_ENDPOINT=https://your-rowt-server.com" > .env
         echo "NODE_ENV=development" >> .env
         print_status "Created basic .env file"
     fi

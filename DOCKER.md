@@ -41,19 +41,38 @@ The application will be available at `http://localhost:3000` (or port 80 in prod
 
 ### Environment Variables
 
+The Docker build process requires configuration. You have two options:
+
+#### Option 1: Environment Variables (Recommended)
+Set environment variables before building:
+
+```bash
+export ROWT_API_ENDPOINT=https://your-rowt-server.com
+export NODE_ENV=production
+docker-compose build
+```
+
+#### Option 2: .env File
 Create a `.env` file in the project root:
+
+```bash
+cp .env.docker.example .env
+# Edit .env with your values
+```
 
 ```env
 # Required: Rowt API endpoint
 ROWT_API_ENDPOINT=https://your-rowt-server.com
 
 # Optional: Environment
-NODE_ENV=development
+NODE_ENV=production
 
 # Optional: Custom ports
 DEV_PORT=8080
 PROD_PORT=3000
 ```
+
+**Note**: The Docker build process will use these values as build arguments to inject configuration at build time.
 
 ### Docker Compose Files
 
@@ -169,10 +188,29 @@ environment:
 ```
 
 ### Build Issues
-Clear Docker cache and rebuild:
+
+#### "npm run build" fails with exit code 1
+This usually means the build process can't find the required environment configuration:
+
+```bash
+# Set environment variables before building
+export ROWT_API_ENDPOINT=https://your-rowt-server.com
+docker-compose build --no-cache rowt-ui-dev
+
+# Or pass build arguments directly
+docker-compose build --build-arg ROWT_API_ENDPOINT=https://your-server.com rowt-ui-dev
+```
+
+#### Clear Docker cache and rebuild:
 
 ```bash
 docker-compose build --no-cache rowt-ui-dev
+```
+
+#### Check build logs for specific errors:
+
+```bash
+docker-compose build rowt-ui-dev 2>&1 | tee build.log
 ```
 
 ### Permission Issues
