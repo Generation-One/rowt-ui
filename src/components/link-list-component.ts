@@ -66,7 +66,7 @@ export class LinkListComponent extends BaseComponent {
   }
 
   private createHeader(): HTMLElement {
-    const header = createElement('div', { className: 'links-header' });
+    const header = createElement('div', { className: 'link-list-header' });
 
     // Title and create button
     const titleSection = createElement('div', { className: 'header-title-section' });
@@ -85,7 +85,7 @@ export class LinkListComponent extends BaseComponent {
     const searchInput = createElement('input', {
       attributes: {
         type: 'text',
-        placeholder: 'Search links...',
+        placeholder: 'Search by URL, title, or short code...',
         id: 'link-search'
       },
       className: 'search-input'
@@ -125,10 +125,10 @@ export class LinkListComponent extends BaseComponent {
 
     // View mode toggle
     const viewToggle = createElement('div', { className: 'view-toggle' });
-    const tableBtn = this.createButton('Table', 'btn btn-sm view-btn active', () => {
+    const tableBtn = this.createButton('Table', 'view-btn active', () => {
       this.setViewMode('table');
     });
-    const cardsBtn = this.createButton('Cards', 'btn btn-sm view-btn', () => {
+    const cardsBtn = this.createButton('Cards', 'view-btn', () => {
       this.setViewMode('cards');
     });
     tableBtn.dataset.mode = 'table';
@@ -147,7 +147,7 @@ export class LinkListComponent extends BaseComponent {
   }
 
   private createBulkActionsBar(): HTMLElement {
-    const bar = createElement('div', { className: 'bulk-actions-bar hidden' });
+    const bar = createElement('div', { className: 'bulk-actions-bar' });
     
     const info = createElement('span', { className: 'bulk-info' });
     const deleteBtn = this.createButton('Delete Selected', 'btn btn-danger btn-sm disabled', () => {
@@ -354,15 +354,15 @@ export class LinkListComponent extends BaseComponent {
     row.appendChild(checkboxTd);
     
     // Short code
-    const shortCodeTd = createElement('td');
+    const shortCodeTd = createElement('td', { className: 'short-code-cell' });
     const shortCodeLink = createElement('a', {
       textContent: link.shortCode || link.id,
-      attributes: { 
+      attributes: {
         href: `/${link.shortCode}`,
         target: '_blank',
         title: 'Open short link'
       },
-      className: 'short-link'
+      className: 'short-code-link'
     });
     shortCodeTd.appendChild(shortCodeLink);
     row.appendChild(shortCodeTd);
@@ -371,18 +371,19 @@ export class LinkListComponent extends BaseComponent {
     const urlTd = createElement('td', { className: 'url-cell' });
     const urlText = createElement('span', {
       textContent: this.truncateText(link.url, 50),
+      className: 'url-text',
       attributes: { title: link.url }
     });
     urlTd.appendChild(urlText);
     row.appendChild(urlTd);
     
     // Title
-    const titleTd = createElement('td');
+    const titleTd = createElement('td', { className: 'title-cell' });
     titleTd.textContent = link.title || '-';
     row.appendChild(titleTd);
-    
+
     // Project
-    const projectTd = createElement('td');
+    const projectTd = createElement('td', { className: 'project-cell' });
     const project = this.config.projects.find(p => p.id === link.projectId);
     projectTd.textContent = project?.name || 'Unknown';
     row.appendChild(projectTd);
@@ -401,20 +402,21 @@ export class LinkListComponent extends BaseComponent {
     const actionsTd = createElement('td', { className: 'actions-cell' });
     const actionsContainer = createElement('div', { className: 'table-actions' });
     
-    const editBtn = this.createButton('Edit', 'btn btn-sm btn-secondary disabled', () => {
-      // Edit functionality not supported
-      this.showInfo('Link editing is not currently supported. Create a new link if changes are needed.');
+    // Copy button (functional)
+    const copyBtn = this.createButton('Copy', 'btn btn-sm btn-secondary', () => {
+      const shortUrl = `${window.location.origin}/${link.shortCode}`;
+      this.copyToClipboard(shortUrl);
     });
-    editBtn.setAttribute('title', 'Link editing not currently supported');
+    copyBtn.setAttribute('title', 'Copy short link to clipboard');
 
-    const deleteBtn = this.createButton('Delete', 'btn btn-sm btn-danger disabled', () => {
-      // Delete functionality not supported
-      this.showInfo('Link deletion is not currently supported. Links will expire based on server configuration.');
+    // Analytics button (placeholder for future functionality)
+    const analyticsBtn = this.createButton('Analytics', 'btn btn-sm btn-outline-primary', () => {
+      this.showInfo('Analytics feature coming soon! Track clicks, referrers, and more.');
     });
-    deleteBtn.setAttribute('title', 'Link deletion not currently supported');
+    analyticsBtn.setAttribute('title', 'View link analytics (coming soon)');
 
-    actionsContainer.appendChild(editBtn);
-    actionsContainer.appendChild(deleteBtn);
+    actionsContainer.appendChild(copyBtn);
+    actionsContainer.appendChild(analyticsBtn);
     actionsTd.appendChild(actionsContainer);
     row.appendChild(actionsTd);
     
@@ -450,20 +452,22 @@ export class LinkListComponent extends BaseComponent {
     });
     
     const actions = createElement('div', { className: 'card-actions' });
-    const editBtn = this.createButton('Edit', 'btn btn-sm btn-secondary disabled', () => {
-      // Edit functionality not supported
-      this.showInfo('Link editing is not currently supported. Create a new link if changes are needed.');
-    });
-    editBtn.setAttribute('title', 'Link editing not currently supported');
 
-    const deleteBtn = this.createButton('Delete', 'btn btn-sm btn-danger disabled', () => {
-      // Delete functionality not supported
-      this.showInfo('Link deletion is not currently supported. Links will expire based on server configuration.');
+    // Copy button (functional)
+    const copyBtn = this.createButton('Copy', 'btn btn-sm btn-secondary', () => {
+      const shortUrl = `${window.location.origin}/${link.shortCode}`;
+      this.copyToClipboard(shortUrl);
     });
-    deleteBtn.setAttribute('title', 'Link deletion not currently supported');
+    copyBtn.setAttribute('title', 'Copy short link to clipboard');
 
-    actions.appendChild(editBtn);
-    actions.appendChild(deleteBtn);
+    // Analytics button (placeholder for future functionality)
+    const analyticsBtn = this.createButton('Analytics', 'btn btn-sm btn-outline-primary', () => {
+      this.showInfo('Analytics feature coming soon! Track clicks, referrers, and more.');
+    });
+    analyticsBtn.setAttribute('title', 'View link analytics (coming soon)');
+
+    actions.appendChild(copyBtn);
+    actions.appendChild(analyticsBtn);
     
     cardHeader.appendChild(checkbox);
     cardHeader.appendChild(actions);
@@ -667,18 +671,53 @@ export class LinkListComponent extends BaseComponent {
   }
 
   protected showError(message: string): void {
-    const error = createElement('div', {
-      textContent: message,
-      className: 'error-message'
-    });
-    
-    this.container.insertBefore(error, this.container.firstChild);
-    
-    setTimeout(() => {
-      if (error.parentNode) {
-        error.remove();
+    this.showNotification(message, 'error');
+  }
+
+  private async copyToClipboard(text: string): Promise<void> {
+    try {
+      await navigator.clipboard.writeText(text);
+      this.showSuccess('Link copied to clipboard!');
+    } catch (err) {
+      // Fallback for older browsers
+      const textArea = document.createElement('textarea');
+      textArea.value = text;
+      textArea.style.position = 'fixed';
+      textArea.style.left = '-999999px';
+      textArea.style.top = '-999999px';
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+
+      try {
+        document.execCommand('copy');
+        this.showSuccess('Link copied to clipboard!');
+      } catch (err) {
+        this.showError('Failed to copy link to clipboard');
+      } finally {
+        document.body.removeChild(textArea);
       }
-    }, 5000);
+    }
+  }
+
+  private showSuccess(message: string): void {
+    this.showNotification(message, 'success');
+  }
+
+  private showNotification(message: string, type: 'success' | 'error' | 'info'): void {
+    const notification = createElement('div', {
+      textContent: message,
+      className: `notification ${type}`
+    });
+
+    document.body.appendChild(notification);
+
+    // Auto-remove after 3 seconds
+    setTimeout(() => {
+      if (notification.parentNode) {
+        notification.remove();
+      }
+    }, 3000);
   }
 
   // Public methods for external control
