@@ -43,18 +43,24 @@ export class ProjectManager extends BaseComponent {
       const emptyState = createElement('div', {
         className: 'empty-state',
         innerHTML: `
+          <div class="empty-icon">📁</div>
           <h3>No Projects Yet</h3>
-          <p>Create your first project to start generating short links.</p>
+          <p>Create your first project to start generating short links and managing your URLs.</p>
         `
       });
       projectsList.appendChild(emptyState);
       return;
     }
 
+    // Create project grid container
+    const projectGrid = createElement('div', { className: 'project-list' });
+
     this.projects.forEach(project => {
       const projectCard = this.createProjectCard(project);
-      projectsList.appendChild(projectCard);
+      projectGrid.appendChild(projectCard);
     });
+
+    projectsList.appendChild(projectGrid);
   }
 
   private createProjectCard(project: Project): HTMLElement {
@@ -65,22 +71,32 @@ export class ProjectManager extends BaseComponent {
     const createdDate = createElement('span', {
       className: 'project-date',
       textContent: project.createdAt
-        ? `Created: ${new Date(project.createdAt).toLocaleDateString()}`
-        : 'Created: Recently'
+        ? `Created ${new Date(project.createdAt).toLocaleDateString()}`
+        : 'Created recently'
     });
 
     header.appendChild(title);
     header.appendChild(createdDate);
 
     const details = createElement('div', { className: 'project-details' });
-    
+
     const baseUrl = createElement('p', {
-      innerHTML: `<strong>Base URL:</strong> ${project.baseUrl}`
+      innerHTML: `<strong>Base URL:</strong>`
     });
-    
+    const baseUrlValue = createElement('div', {
+      className: 'project-url',
+      textContent: project.baseUrl
+    });
+    baseUrl.appendChild(baseUrlValue);
+
     const fallbackUrl = createElement('p', {
-      innerHTML: `<strong>Fallback URL:</strong> ${project.fallbackUrl}`
+      innerHTML: `<strong>Fallback URL:</strong>`
     });
+    const fallbackUrlValue = createElement('div', {
+      className: 'project-url',
+      textContent: project.fallbackUrl
+    });
+    fallbackUrl.appendChild(fallbackUrlValue);
 
     details.appendChild(baseUrl);
     details.appendChild(fallbackUrl);
@@ -107,23 +123,25 @@ export class ProjectManager extends BaseComponent {
     }
 
     // API Key section
-    const apiKeySection = createElement('div', { className: 'api-key-section' });
-    const apiKeyLabel = createElement('p', {
-      innerHTML: '<strong>API Key:</strong>'
-    });
-    
+    const apiKeySection = createElement('div', { className: 'project-api-key' });
+    const apiKeyLabel = createElement('label', { textContent: 'API Key' });
+
     const apiKeyContainer = createElement('div', { className: 'api-key-container' });
     const apiKeyInput = createElement('input', {
       attributes: {
         type: 'text',
-        value: project.apiKey,
+        value: project.apiKey || 'No API key generated',
         readonly: 'true'
       },
       className: 'api-key-input'
     }) as HTMLInputElement;
-    
-    const copyButton = this.createButton('Copy', 'btn btn-secondary btn-sm', () => {
-      this.copyToClipboard(project.apiKey);
+
+    const copyButton = this.createButton('Copy', 'copy-api-key-btn', () => {
+      if (project.apiKey) {
+        this.copyToClipboard(project.apiKey);
+      } else {
+        this.showError('No API key available to copy');
+      }
     });
 
     apiKeyContainer.appendChild(apiKeyInput);
@@ -132,13 +150,13 @@ export class ProjectManager extends BaseComponent {
     apiKeySection.appendChild(apiKeyContainer);
 
     // Actions
-    const actions = createElement('div', { className: 'card-actions' });
-    
+    const actions = createElement('div', { className: 'project-actions' });
+
     const viewLinksBtn = this.createButton('View Links', 'btn btn-primary', () => {
       this.emit('project:view-links', project);
     });
-    
-    const editBtn = this.createButton('Edit', 'btn btn-secondary', () => {
+
+    const editBtn = this.createButton('Edit Project', 'btn btn-secondary', () => {
       this.showEditProjectModal(project);
     });
 
@@ -248,8 +266,11 @@ export class ProjectManager extends BaseComponent {
     );
 
     // Submit button
-    const submitButton = this.createButton('Create Project', 'btn btn-primary');
-    submitButton.type = 'submit';
+    const submitButton = createElement('button', {
+      textContent: 'Create Project',
+      className: 'btn btn-primary',
+      attributes: { type: 'submit' }
+    }) as HTMLButtonElement;
 
     // Assemble form
     form.appendChild(nameGroup);
@@ -262,7 +283,10 @@ export class ProjectManager extends BaseComponent {
     form.appendChild(submitButton);
 
     // Add form submit handler
-    form.addEventListener('submit', this.handleCreateProject.bind(this));
+    form.addEventListener('submit', (event) => {
+      console.log('Create form submit event triggered');
+      this.handleCreateProject(event);
+    });
 
     container.appendChild(form);
     return container;
@@ -346,8 +370,11 @@ export class ProjectManager extends BaseComponent {
     );
 
     // Submit button
-    const submitButton = this.createButton('Update Project', 'btn btn-primary');
-    submitButton.type = 'submit';
+    const submitButton = createElement('button', {
+      textContent: 'Update Project',
+      className: 'btn btn-primary',
+      attributes: { type: 'submit' }
+    }) as HTMLButtonElement;
 
     // Cancel button
     const cancelButton = this.createButton('Cancel', 'btn btn-secondary', () => {
@@ -369,7 +396,10 @@ export class ProjectManager extends BaseComponent {
     form.appendChild(buttonGroup);
 
     // Add form submit handler
-    form.addEventListener('submit', (event) => this.handleEditProject(event, project));
+    form.addEventListener('submit', (event) => {
+      console.log('Form submit event triggered');
+      this.handleEditProject(event, project);
+    });
 
     container.appendChild(form);
     return container;
@@ -425,25 +455,36 @@ export class ProjectManager extends BaseComponent {
 
   private async handleEditProject(event: Event, project: Project): Promise<void> {
     event.preventDefault();
+    console.log('Edit project form submitted for project:', project.id);
 
     const form = event.target as HTMLFormElement;
     const formData = new FormData(form);
 
+    // Log form data for debugging
+    console.log('Form data:', Object.fromEntries(formData.entries()));
+
     const editData: EditProjectRequest = {};
 
-    // Only include fields that have values and are different from current values
+    // Validate required fields first
     const name = formData.get('name') as string;
-    if (name && name !== project.name) {
+    const baseUrl = formData.get('baseUrl') as string;
+    const fallbackUrl = formData.get('fallbackUrl') as string;
+
+    if (!name || !baseUrl || !fallbackUrl) {
+      this.showError('Please fill in all required fields (Name, Base URL, Fallback URL).');
+      return;
+    }
+
+    // Only include fields that have values and are different from current values
+    if (name !== project.name) {
       editData.name = name;
     }
 
-    const baseUrl = formData.get('baseUrl') as string;
-    if (baseUrl && baseUrl !== project.baseUrl) {
+    if (baseUrl !== project.baseUrl) {
       editData.baseUrl = baseUrl;
     }
 
-    const fallbackUrl = formData.get('fallbackUrl') as string;
-    if (fallbackUrl && fallbackUrl !== project.fallbackUrl) {
+    if (fallbackUrl !== project.fallbackUrl) {
       editData.fallbackUrl = fallbackUrl;
     }
 
@@ -467,16 +508,21 @@ export class ProjectManager extends BaseComponent {
       editData.androidScheme = androidScheme || undefined;
     }
 
+    console.log('Edit data to send:', editData);
+
     // Check if any changes were made
     if (Object.keys(editData).length === 0) {
       this.showInfo('No changes detected.');
+      this.emit('modal:hide');
       return;
     }
 
     try {
       this.setLoading(true, form);
+      console.log('Sending edit request...');
 
       const updatedProject = await this.apiClient.editProject(project.id, editData);
+      console.log('Project updated successfully:', updatedProject);
 
       // Update the project in the local array
       const projectIndex = this.projects.findIndex(p => p.id === project.id);
@@ -490,7 +536,8 @@ export class ProjectManager extends BaseComponent {
 
     } catch (error) {
       console.error('Failed to edit project:', error);
-      this.showError('Failed to update project. Please try again.');
+      const errorMessage = error instanceof Error ? error.message : 'Failed to update project. Please try again.';
+      this.showError(errorMessage);
     } finally {
       this.setLoading(false, form);
     }

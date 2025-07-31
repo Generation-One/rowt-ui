@@ -133,32 +133,19 @@ export class ApiClient {
     try {
       await this.ensureInitialized();
 
-      // Make direct API call to update project using JWT authentication
-      const config = await import('../config/app-config.js').then(m => m.getAppConfig());
-      const token = this.sdkService.getTokens()?.accessToken;
+      // Use the SDK's updateProject method
+      const updateData = {
+        id: projectId,
+        ...projectData
+      };
 
-      if (!token) {
-        throw new Error('Authentication required. Please log in.');
-      }
-
-      const response = await fetch(`${config.apiEndpoint}/projects/${projectId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(projectData)
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(errorText || `HTTP ${response.status}: ${response.statusText}`);
-      }
-
-      const result = await response.json();
-      return result.project;
+      const updatedProject = await this.sdkService.updateProject(updateData);
+      return updatedProject;
     } catch (error) {
       console.error('Failed to edit project:', error);
+      if (error instanceof RowtSDKError) {
+        throw new Error(error.message);
+      }
       throw error;
     }
   }

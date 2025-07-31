@@ -234,25 +234,40 @@ export class DashboardComponent extends BaseComponent {
   }
 
   private createProjectsContent(): HTMLElement {
-    const content = createElement('div');
-    
-    const sectionHeader = createElement('div', { className: 'section-header' });
+    const content = createElement('div', { className: 'projects-container' });
+
+    // Projects header
+    const header = createElement('div', { className: 'projects-header' });
+
+    const titleSection = createElement('div', { className: 'projects-title-section' });
     const title = createElement('h2', { textContent: 'Projects' });
     const createBtn = this.createButton('Create New Project', 'btn btn-primary', () => {
       this.emit('projects:create');
     });
-    
-    sectionHeader.appendChild(title);
-    sectionHeader.appendChild(createBtn);
-    
+
+    titleSection.appendChild(title);
+    titleSection.appendChild(createBtn);
+
+    // Projects stats (placeholder for future enhancement)
+    const stats = createElement('div', { className: 'projects-stats' });
+    const totalStat = createElement('div', { className: 'projects-stat' });
+    totalStat.innerHTML = `<span>Total Projects:</span> <span class="projects-stat-value">-</span>`;
+    stats.appendChild(totalStat);
+
+    header.appendChild(titleSection);
+    header.appendChild(stats);
+
+    // Projects list container
+    const projectsListContainer = createElement('div', { className: 'projects-list' });
     const projectsList = createElement('div', {
-      id: 'projects-list',
-      className: 'projects-list'
+      id: 'projects-list'
     });
-    
-    content.appendChild(sectionHeader);
-    content.appendChild(projectsList);
-    
+
+    projectsListContainer.appendChild(projectsList);
+
+    content.appendChild(header);
+    content.appendChild(projectsListContainer);
+
     return content;
   }
 

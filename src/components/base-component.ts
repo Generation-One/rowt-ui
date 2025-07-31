@@ -36,6 +36,7 @@ export abstract class BaseComponent extends EventEmitter {
     required: boolean = false
   ): HTMLInputElement {
     const input = createElement('input', {
+      className: 'form-control',
       attributes: {
         type,
         ...(placeholder && { placeholder }),
@@ -49,6 +50,7 @@ export abstract class BaseComponent extends EventEmitter {
 
   protected createLabel(text: string, htmlFor?: string): HTMLLabelElement {
     const label = createElement('label', {
+      className: 'form-label',
       textContent: text,
       ...(htmlFor && { attributes: { for: htmlFor } })
     });
@@ -108,14 +110,17 @@ export abstract class BaseComponent extends EventEmitter {
 
     const labelElement = this.createLabel(label, id);
 
-    // Add help icon if help text is provided
-    if (helpText) {
-      const helpIcon = this.createHelpIcon(helpText);
-      labelElement.appendChild(helpIcon);
-    }
-
     group.appendChild(labelElement);
     group.appendChild(input);
+
+    // Add help text as description if provided
+    if (helpText) {
+      const description = createElement('small', {
+        className: 'form-description',
+        textContent: helpText
+      });
+      group.appendChild(description);
+    }
 
     return group;
   }
