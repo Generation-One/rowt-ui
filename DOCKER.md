@@ -67,9 +67,9 @@ ROWT_API_ENDPOINT=https://your-rowt-server.com
 # Optional: Environment
 NODE_ENV=production
 
-# Optional: Custom ports
-DEV_PORT=8080
-PROD_PORT=3000
+# Optional: Custom host ports
+DEV_PORT=8080    # Host port for development mode (container uses 8080)
+PROD_PORT=3000   # Host port for production mode (container uses 80)
 ```
 
 **Note**: The Docker build process will use these values as build arguments to inject configuration at build time.

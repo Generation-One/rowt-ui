@@ -88,7 +88,7 @@ The application includes comprehensive Docker support with multiple deployment o
 make dev
 
 # Or directly with docker-compose
-docker-compose up -d rowt-ui-dev
+BUILD_MODE=development docker-compose up -d rowt-ui
 ```
 Access at: `http://localhost:8080`
 
@@ -98,17 +98,17 @@ Access at: `http://localhost:8080`
 make prod
 
 # Or directly with docker-compose
-docker-compose -f docker-compose.prod.yml up -d
+BUILD_MODE=production docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d rowt-ui
 ```
 Access at: `http://localhost:3000`
 
 #### Available Docker Compose Files
 
-- `docker-compose.yml` - Base configuration with unified Dockerfile
+- `docker-compose.yml` - Single service configuration that adapts to `BUILD_MODE`
 - `docker-compose.override.yml` - Development overrides (auto-loaded)
-- `docker-compose.prod.yml` - Production configuration
+- `docker-compose.prod.yml` - Production overrides
 
-**Note**: All configurations use the same unified Dockerfile with different `BUILD_MODE` arguments.
+**Note**: Uses a single `rowt-ui` service that changes behavior based on the `BUILD_MODE` environment variable.
 
 #### Makefile Commands
 

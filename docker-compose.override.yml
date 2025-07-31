@@ -4,25 +4,22 @@
 version: '3.8'
 
 services:
-  rowt-ui-dev:
+  rowt-ui:
     build:
-      context: .
-      dockerfile: Dockerfile
       args:
         - BUILD_MODE=development
-    container_name: rowt-ui-dev
+        - NODE_ENV=development
     ports:
-      - "8080:8080"
+      - "${DEV_PORT:-8080}:8080"
     volumes:
       - .:/app
       - /app/node_modules
       - /app/dist
     environment:
       - NODE_ENV=development
-      - CHOKIDAR_USEPOLLING=true  # For file watching in Docker
-    command: npm run dev
-    restart: unless-stopped
+      - BUILD_MODE=development
+      - CHOKIDAR_USEPOLLING=true
+      - HOST_PORT=8080
+      - CONTAINER_PORT=8080
     stdin_open: true
     tty: true
-    networks:
-      - rowt-network

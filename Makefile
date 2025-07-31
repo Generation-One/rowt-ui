@@ -29,28 +29,28 @@ help:
 # Development commands
 dev:
 	@echo "Starting development environment..."
-	docker-compose up -d rowt-ui-dev
+	BUILD_MODE=development docker-compose up -d rowt-ui
 	@echo "Development server available at http://localhost:8080"
 
 dev-build:
 	@echo "Building and starting development environment..."
-	docker-compose build --build-arg BUILD_MODE=development rowt-ui-dev
-	docker-compose up -d rowt-ui-dev
+	BUILD_MODE=development docker-compose build rowt-ui
+	BUILD_MODE=development docker-compose up -d rowt-ui
 	@echo "Development server available at http://localhost:8080"
 
 dev-logs:
-	docker-compose logs -f rowt-ui-dev
+	docker-compose logs -f rowt-ui
 
 # Production commands
 prod:
 	@echo "Starting production environment..."
-	docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d rowt-ui
+	BUILD_MODE=production docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d rowt-ui
 	@echo "Production server available at http://localhost:3000"
 
 prod-build:
 	@echo "Building and starting production environment..."
-	docker-compose -f docker-compose.yml -f docker-compose.prod.yml build --build-arg BUILD_MODE=production rowt-ui
-	docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d rowt-ui
+	BUILD_MODE=production docker-compose -f docker-compose.yml -f docker-compose.prod.yml build rowt-ui
+	BUILD_MODE=production docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d rowt-ui
 	@echo "Production server available at http://localhost:3000"
 
 prod-logs:
@@ -59,8 +59,8 @@ prod-logs:
 # General commands
 build:
 	@echo "Building all images..."
-	docker-compose build
-	docker-compose -f docker-compose.prod.yml build
+	BUILD_MODE=development docker-compose build
+	BUILD_MODE=production docker-compose -f docker-compose.yml -f docker-compose.prod.yml build
 
 stop:
 	@echo "Stopping all containers..."
@@ -85,28 +85,28 @@ health:
 	docker-compose -f docker-compose.prod.yml ps
 
 shell:
-	@echo "Opening shell in development container..."
-	docker-compose exec rowt-ui-dev sh
+	@echo "Opening shell in container..."
+	docker-compose exec rowt-ui sh
 
 # Utility commands
 logs:
 	docker-compose logs -f
 
 install:
-	@echo "Installing dependencies in development container..."
-	docker-compose exec rowt-ui-dev npm install
+	@echo "Installing dependencies in container..."
+	docker-compose exec rowt-ui npm install
 
 test:
-	@echo "Running tests in development container..."
-	docker-compose exec rowt-ui-dev npm test
+	@echo "Running tests in container..."
+	docker-compose exec rowt-ui npm test
 
 # Quick setup for new developers
 setup:
 	@echo "Setting up Rowt UI development environment..."
 	@echo "1. Building development image..."
-	docker-compose build --build-arg BUILD_MODE=development rowt-ui-dev
+	BUILD_MODE=development docker-compose build rowt-ui
 	@echo "2. Starting development environment..."
-	docker-compose up -d rowt-ui-dev
+	BUILD_MODE=development docker-compose up -d rowt-ui
 	@echo "3. Waiting for container to be ready..."
 	sleep 10
 	@echo ""
