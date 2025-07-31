@@ -1,0 +1,23 @@
+{
+  "name": "rowt-dashboard",
+  "version": "1.0.0",
+  "description": "TypeScript frontend for Rowt URL shortener",
+  "main": "dist/main.js",
+  "scripts": {
+    "build": "node build.js",
+    "build:legacy": "npm run build:bundle && npm run copy-assets",
+    "build:bundle": "esbuild src/main.ts --bundle --outfile=dist/main.js --format=esm --platform=browser --target=es2020",
+    "copy-assets": "node -e \"const fs=require('fs'); fs.copyFileSync('dev.html','dist/index.html'); const copyDir=(s,d)=>{if(!fs.existsSync(d))fs.mkdirSync(d,{recursive:true}); fs.readdirSync(s).forEach(f=>{const sp=s+'/'+f,dp=d+'/'+f; fs.statSync(sp).isDirectory()?copyDir(sp,dp):fs.copyFileSync(sp,dp)})};copyDir('public','dist/public')\"",
+    "watch": "npm run build:bundle -- --watch",
+    "dev": "node dev-server.js",
+    "dev:watch": "npm run build && npm run watch & node dev-server.js"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "esbuild": "^0.25.8",
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "rowt-console-sdk": "^0.0.1"
+  }
+}

@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  rowt-ui:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - NODE_ENV=production
+    image: rowt-ui:latest
+    container_name: rowt-ui-prod
+    ports:
+      - "80:80"
+    environment:
+      - NODE_ENV=production
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    labels:
+      - "com.rowt.service=ui"
+      - "com.rowt.environment=production"
+    networks:
+      - rowt-network
+
+networks:
+  rowt-network:
+    driver: bridge
+    name: rowt-network
