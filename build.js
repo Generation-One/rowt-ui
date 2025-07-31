@@ -69,8 +69,8 @@ function buildWithConfig() {
     const fs = require('fs');
     const path = require('path');
 
-    // Copy dev.html to dist/index.html
-    fs.copyFileSync('dev.html', 'dist/index.html');
+    // Copy index.html to dist/index.html
+    fs.copyFileSync('index.html', 'dist/index.html');
 
     // Copy public directory to dist/public
     const copyDir = (src, dest) => {

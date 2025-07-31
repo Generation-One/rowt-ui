@@ -20,7 +20,7 @@ npx tsc
 
 # Copy HTML file to dist directory
 echo "Copying HTML file to dist directory..."
-cp src/index.html dist/
+cp index.html dist/
 
 echo "Build complete!"
 echo "Frontend built to ./dist/"
