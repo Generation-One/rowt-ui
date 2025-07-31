@@ -18,6 +18,8 @@
     "typescript": "^5.0.0"
   },
   "dependencies": {
+    "@types/qrcode": "^1.5.5",
+    "qrcode": "^1.5.4",
     "rowt-console-sdk": "^0.0.1"
   }
 }

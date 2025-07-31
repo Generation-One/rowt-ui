@@ -29,6 +29,21 @@ export abstract class BaseComponent extends EventEmitter {
     return button;
   }
 
+  protected createIconButton(
+    icon: string,
+    className: string,
+    onClick: () => void
+  ): HTMLButtonElement {
+    const button = createElement('button', {
+      textContent: icon,
+      className: className,
+      attributes: { type: 'button' }
+    }) as HTMLButtonElement;
+
+    button.addEventListener('click', onClick);
+    return button;
+  }
+
   protected createInput(
     type: string,
     placeholder?: string,

@@ -1157,16 +1157,52 @@ body {
   color: #3b82f6;
 }
 
+.delete-btn {
+  color: #ef4444;
+  font-weight: bold;
+  font-size: 16px;
+}
+
 .delete-btn:hover {
   background: #fef2f2;
   border-color: #ef4444;
-  color: #ef4444;
+  color: #dc2626;
+  transform: translateY(-1px);
 }
 
 .copy-btn:hover {
   background: #f0fdf4;
   border-color: #10b981;
   color: #10b981;
+}
+
+.qr-btn:hover {
+  background: #f8fafc;
+  border-color: #6366f1;
+  color: #6366f1;
+}
+
+/* QR Code Checkerboard Icon */
+.qr-icon {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 1px;
+  width: 14px;
+  height: 14px;
+}
+
+.qr-square {
+  background: transparent;
+  border-radius: 1px;
+}
+
+.qr-square.qr-filled {
+  background: currentColor;
+}
+
+.qr-btn:hover .qr-square.qr-filled {
+  background: #6366f1;
 }
 
 .analytics-btn:hover {
@@ -2882,5 +2918,312 @@ body {
   .remove-pair-btn {
     align-self: flex-end;
     margin-top: 8px;
+  }
+}
+
+/* QR Code Page Styles */
+.qr-page-content {
+  width: 100%;
+  min-height: 100vh;
+  background: #f9fafb;
+  padding: 24px;
+}
+
+.qr-page-header {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  margin-bottom: 32px;
+  background: #fff;
+  padding: 24px;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.qr-navigation {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.qr-back-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  color: #6b7280;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  transition: all 0.2s ease;
+}
+
+.qr-back-btn:hover {
+  background: #f3f4f6;
+  border-color: #d1d5db;
+  color: #374151;
+  transform: translateX(-2px);
+}
+
+.qr-nav-text {
+  font-size: 16px;
+  font-weight: 500;
+  color: #374151;
+}
+
+.qr-title-section {
+  flex: 1;
+}
+
+.qr-page-title {
+  font-size: 32px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 12px 0;
+}
+
+.qr-link-info {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.qr-link-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.qr-link-url {
+  font-size: 16px;
+  color: #6b7280;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  word-break: break-all;
+  background: #f3f4f6;
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid #e5e7eb;
+}
+
+.qr-content-area {
+  display: grid;
+  grid-template-columns: 1fr 400px;
+  gap: 32px;
+  align-items: start;
+}
+
+.qr-display-section {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  background: #fff;
+  padding: 32px;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.qr-section-title {
+  font-size: 24px;
+  font-weight: 600;
+  color: #111827;
+  margin: 0;
+}
+
+.qr-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+  padding: 32px;
+  background: #fff;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.qr-canvas {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+}
+
+.qr-error {
+  color: #ef4444;
+  text-align: center;
+  font-size: 14px;
+  padding: 20px;
+}
+
+.qr-controls-section,
+.qr-download-section {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  background: #fff;
+  padding: 24px;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.qr-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.qr-control {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.qr-control-label {
+  font-size: 16px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.qr-range-input,
+.qr-select-input {
+  padding: 12px 16px;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 16px;
+  background: #fff;
+  transition: all 0.2s ease;
+}
+
+.qr-range-input:focus,
+.qr-select-input:focus {
+  outline: none;
+  border-color: #6366f1;
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+}
+
+.qr-color-controls {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.qr-color-control {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.qr-color-input {
+  width: 100%;
+  height: 50px;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  cursor: pointer;
+  background: none;
+  transition: border-color 0.2s ease;
+}
+
+.qr-color-input:hover {
+  border-color: #d1d5db;
+}
+
+.qr-color-input::-webkit-color-swatch-wrapper {
+  padding: 4px;
+}
+
+.qr-color-input::-webkit-color-swatch {
+  border: none;
+  border-radius: 4px;
+}
+
+.qr-download-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.qr-download-btn {
+  padding: 16px 24px;
+  font-size: 16px;
+  font-weight: 600;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  border: none;
+  cursor: pointer;
+}
+
+.qr-download-btn.btn-primary {
+  background: #6366f1;
+  color: white;
+}
+
+.qr-download-btn.btn-primary:hover {
+  background: #5855eb;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+}
+
+.qr-download-btn.btn-secondary {
+  background: #f3f4f6;
+  color: #374151;
+  border: 2px solid #e5e7eb;
+}
+
+.qr-download-btn.btn-secondary:hover {
+  background: #e5e7eb;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* QR Code Page Responsive Design */
+@media (max-width: 1024px) {
+  .qr-content-area {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+
+  .qr-controls-section,
+  .qr-download-section {
+    order: 2;
+  }
+
+  .qr-display-section {
+    order: 1;
+  }
+}
+
+@media (max-width: 768px) {
+  .qr-page-content {
+    padding: 16px;
+  }
+
+  .qr-page-header {
+    padding: 20px;
+    gap: 20px;
+  }
+
+  .qr-page-title {
+    font-size: 28px;
+  }
+
+  .qr-display-section,
+  .qr-controls-section,
+  .qr-download-section {
+    padding: 20px;
+  }
+
+  .qr-container {
+    min-height: 280px;
+    padding: 20px;
+  }
+
+  .qr-color-controls {
+    grid-template-columns: 1fr;
+  }
+
+  .qr-download-buttons {
+    gap: 12px;
   }
 }

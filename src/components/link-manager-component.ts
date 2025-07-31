@@ -1,16 +1,19 @@
 import { BaseComponent } from './base-component.js';
 import { LinkFormComponent, LinkFormConfig } from './link-form-component.js';
 import { LinkListComponent, LinkListConfig } from './link-list-component.js';
+import { QRCodeModalComponent, QRCodePageConfig } from './qr-code-modal-component.js';
 import { ApiClient } from '../services/api-client.js';
 import { createElement, querySelector } from '../utils/dom-helpers.js';
+import { generateShortUrl } from '../utils/data-transformers.js';
 import type { Link, Project, CreateLinkRequest, UpdateLinkRequest } from '../types/api.js';
 
 export class LinkManagerComponent extends BaseComponent {
   private apiClient: ApiClient;
   private projects: Project[] = [];
-  private currentView: 'list' | 'form' = 'list';
+  private currentView: 'list' | 'form' | 'qr' = 'list';
   private linkListComponent: LinkListComponent | null = null;
   private linkFormComponent: LinkFormComponent | null = null;
+  private qrCodeModalComponent: QRCodeModalComponent | null = null;
   private editingLink: Link | null = null;
 
   constructor(container: HTMLElement, apiClient: ApiClient) {
@@ -67,7 +70,8 @@ export class LinkManagerComponent extends BaseComponent {
       onEdit: (link: Link) => this.handleEditLink(link),
       onDelete: (link: Link) => this.handleDeleteLink(link),
       onBulkDelete: (linkIds: string[]) => this.handleBulkDelete(linkIds),
-      onCreateNew: () => this.showCreateForm()
+      onCreateNew: () => this.showCreateForm(),
+      onGenerateQR: (link: Link) => this.handleGenerateQR(link)
     };
 
     this.linkListComponent = new LinkListComponent(contentArea, this.apiClient, listConfig);
@@ -344,9 +348,45 @@ export class LinkManagerComponent extends BaseComponent {
     }
   }
 
+  private async handleGenerateQR(link: Link): Promise<void> {
+    try {
+      // Generate the short URL for the QR code
+      const shortUrl = await generateShortUrl(link.shortCode || link.id);
+
+      // Switch to QR code view
+      this.showQRCodePage(link, shortUrl);
+
+    } catch (error) {
+      console.error('Failed to generate QR code:', error);
+      this.showError('Failed to generate QR code. Please try again.');
+    }
+  }
+
+  private showQRCodePage(link: Link, shortUrl: string): void {
+    this.currentView = 'qr';
+
+    const contentArea = querySelector('.link-manager-content', this.container) as HTMLElement;
+    if (!contentArea) return;
+
+    contentArea.innerHTML = '';
+
+    // Create QR code page config
+    const qrConfig: QRCodePageConfig = {
+      link: link,
+      shortUrl: shortUrl,
+      onClose: () => {
+        this.showListView();
+      }
+    };
+
+    // Create and render QR code page
+    this.qrCodeModalComponent = new QRCodeModalComponent(contentArea, qrConfig);
+    this.qrCodeModalComponent.render();
+  }
+
   public async refreshProjects(): Promise<void> {
     await this.loadProjects();
-    
+
     // If we're showing the no projects state and now have projects, show the list
     if (this.projects.length > 0 && this.currentView === 'list') {
       this.showListView();

@@ -282,6 +282,15 @@ export class DashboardComponent extends BaseComponent {
       this.emit('projects:create');
     });
 
+    // Listen for modal events from the link manager
+    this.linkManagerComponent.on('modal:show', (config) => {
+      this.emit('modal:show', config);
+    });
+
+    this.linkManagerComponent.on('modal:hide', () => {
+      this.emit('modal:hide');
+    });
+
     return content;
   }
 

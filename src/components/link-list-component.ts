@@ -11,6 +11,7 @@ export interface LinkListConfig {
   onDelete: (link: Link) => void;
   onBulkDelete: (linkIds: string[]) => void;
   onCreateNew: () => void;
+  onGenerateQR: (link: Link) => void;
 }
 
 export class LinkListComponent extends BaseComponent {
@@ -409,12 +410,6 @@ export class LinkListComponent extends BaseComponent {
     });
     editBtn.setAttribute('title', 'Edit link');
 
-    // Delete button
-    const deleteBtn = this.createIconButton('🗑️', 'action-btn delete-btn', () => {
-      this.config.onDelete(link);
-    });
-    deleteBtn.setAttribute('title', 'Delete link');
-
     // Copy button (functional)
     const copyBtn = this.createIconButton('📋', 'action-btn copy-btn', async () => {
       const shortUrl = await generateShortUrl(link.shortCode || link.id);
@@ -422,16 +417,43 @@ export class LinkListComponent extends BaseComponent {
     });
     copyBtn.setAttribute('title', 'Copy short link to clipboard');
 
+    // QR Code button with custom checkerboard icon
+    const qrBtn = createElement('button', {
+      className: 'action-btn qr-btn',
+      attributes: { type: 'button', title: 'Generate QR code' }
+    }) as HTMLButtonElement;
+
+    // Create 2x2 checkerboard pattern
+    const qrIcon = createElement('div', { className: 'qr-icon' });
+    qrIcon.innerHTML = `
+      <div class="qr-square qr-filled"></div>
+      <div class="qr-square"></div>
+      <div class="qr-square"></div>
+      <div class="qr-square qr-filled"></div>
+    `;
+
+    qrBtn.appendChild(qrIcon);
+    qrBtn.addEventListener('click', () => {
+      this.config.onGenerateQR(link);
+    });
+
     // Analytics button (placeholder for future functionality)
     const analyticsBtn = this.createIconButton('📊', 'action-btn analytics-btn', () => {
       this.showInfo('Analytics feature coming soon! Track clicks, referrers, and more.');
     });
     analyticsBtn.setAttribute('title', 'View link analytics (coming soon)');
 
+    // Delete button (red X, placed last)
+    const deleteBtn = this.createIconButton('×', 'action-btn delete-btn', () => {
+      this.config.onDelete(link);
+    });
+    deleteBtn.setAttribute('title', 'Delete link');
+
     actionsContainer.appendChild(editBtn);
-    actionsContainer.appendChild(deleteBtn);
     actionsContainer.appendChild(copyBtn);
+    actionsContainer.appendChild(qrBtn);
     actionsContainer.appendChild(analyticsBtn);
+    actionsContainer.appendChild(deleteBtn);
     actionsTd.appendChild(actionsContainer);
     row.appendChild(actionsTd);
     
@@ -475,12 +497,6 @@ export class LinkListComponent extends BaseComponent {
     });
     editBtn.setAttribute('title', 'Edit link');
 
-    // Delete button
-    const deleteBtn = this.createIconButton('🗑️', 'action-btn delete-btn', () => {
-      this.config.onDelete(link);
-    });
-    deleteBtn.setAttribute('title', 'Delete link');
-
     // Copy button (functional)
     const copyBtn = this.createIconButton('📋', 'action-btn copy-btn', async () => {
       const shortUrl = await generateShortUrl(link.shortCode || link.id);
@@ -488,16 +504,43 @@ export class LinkListComponent extends BaseComponent {
     });
     copyBtn.setAttribute('title', 'Copy short link to clipboard');
 
+    // QR Code button with custom checkerboard icon
+    const qrBtn = createElement('button', {
+      className: 'action-btn qr-btn',
+      attributes: { type: 'button', title: 'Generate QR code' }
+    }) as HTMLButtonElement;
+
+    // Create 2x2 checkerboard pattern
+    const qrIcon = createElement('div', { className: 'qr-icon' });
+    qrIcon.innerHTML = `
+      <div class="qr-square qr-filled"></div>
+      <div class="qr-square"></div>
+      <div class="qr-square"></div>
+      <div class="qr-square qr-filled"></div>
+    `;
+
+    qrBtn.appendChild(qrIcon);
+    qrBtn.addEventListener('click', () => {
+      this.config.onGenerateQR(link);
+    });
+
     // Analytics button (placeholder for future functionality)
     const analyticsBtn = this.createIconButton('📊', 'action-btn analytics-btn', () => {
       this.showInfo('Analytics feature coming soon! Track clicks, referrers, and more.');
     });
     analyticsBtn.setAttribute('title', 'View link analytics (coming soon)');
 
+    // Delete button (red X, placed last)
+    const deleteBtn = this.createIconButton('×', 'action-btn delete-btn', () => {
+      this.config.onDelete(link);
+    });
+    deleteBtn.setAttribute('title', 'Delete link');
+
     actions.appendChild(editBtn);
-    actions.appendChild(deleteBtn);
     actions.appendChild(copyBtn);
+    actions.appendChild(qrBtn);
     actions.appendChild(analyticsBtn);
+    actions.appendChild(deleteBtn);
     
     cardHeader.appendChild(checkbox);
     cardHeader.appendChild(actions);

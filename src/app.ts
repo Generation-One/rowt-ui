@@ -210,8 +210,14 @@ export class App {
         this.loadProjectsTab();
       });
 
-      // Link management is now handled by LinkManagerComponent
-      // No additional event handling needed here
+      // Modal events from dashboard (including link manager)
+      this.dashboardComponent.on('modal:show', (config) => {
+        this.showModal(config.title, config.content);
+      });
+
+      this.dashboardComponent.on('modal:hide', () => {
+        this.hideModal();
+      });
     }
 
     this.dashboardComponent.render();
