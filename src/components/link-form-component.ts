@@ -66,8 +66,8 @@ export class LinkFormComponent extends BaseComponent {
       this.form.appendChild(projectGroup);
     }
 
-    // URL field
-    const urlGroup = this.createLinkFormGroup('URL', 'url', 'url', true, 'Enter the URL to shorten...');
+    // URL field - use 'text' type to allow custom schemes and templates
+    const urlGroup = this.createLinkFormGroup('URL', 'text', 'url', true, 'Enter the URL to shorten...');
     const urlInput = urlGroup.querySelector('input') as HTMLInputElement;
     if (this.config.link?.url) {
       urlInput.value = this.config.link.url;
@@ -99,16 +99,16 @@ export class LinkFormComponent extends BaseComponent {
     }
     this.form.appendChild(descGroup);
 
-    // Image URL field
-    const imageGroup = this.createLinkFormGroup('Image URL', 'url', 'imageUrl', false, 'Optional image URL...');
+    // Image URL field - use 'text' type to allow custom schemes
+    const imageGroup = this.createLinkFormGroup('Image URL', 'text', 'imageUrl', false, 'Optional image URL...');
     const imageInput = imageGroup.querySelector('input') as HTMLInputElement;
     if (this.config.link?.imageUrl) {
       imageInput.value = this.config.link.imageUrl;
     }
     this.form.appendChild(imageGroup);
 
-    // Fallback URL field
-    const fallbackGroup = this.createLinkFormGroup('Fallback URL', 'url', 'fallbackUrlOverride', false, 'Optional fallback URL for when app is not installed...');
+    // Fallback URL field - use 'text' type to allow custom schemes
+    const fallbackGroup = this.createLinkFormGroup('Fallback URL', 'text', 'fallbackUrlOverride', false, 'Optional fallback URL for when app is not installed...');
     const fallbackInput = fallbackGroup.querySelector('input') as HTMLInputElement;
     if (this.config.link?.fallbackUrlOverride) {
       fallbackInput.value = this.config.link.fallbackUrlOverride;
@@ -739,11 +739,20 @@ export class LinkFormComponent extends BaseComponent {
 
   private async validateUrl(): Promise<void> {
     if (this.isValidatingUrl) return;
-    
+
     const urlInput = this.form?.querySelector('input[name="url"]') as HTMLInputElement;
     const url = urlInput?.value?.trim();
-    
+
     if (!url || !this.isValidUrl(url)) {
+      this.clearUrlPreview();
+      return;
+    }
+
+    // Only attempt to fetch metadata for standard HTTP/HTTPS URLs
+    const isStandardUrl = this.isStandardHttpUrl(url);
+    if (!isStandardUrl) {
+      // For custom schemes, templates, or deep links, just clear the preview
+      // The URL is valid but we can't fetch metadata for it
       this.clearUrlPreview();
       return;
     }
@@ -753,7 +762,7 @@ export class LinkFormComponent extends BaseComponent {
 
     try {
       const result = await this.apiClient.validateUrl(url);
-      
+
       if (result.valid) {
         const previewData: { title?: string; description?: string; imageUrl?: string } = {};
         if (result.title) previewData.title = result.title;
@@ -761,15 +770,15 @@ export class LinkFormComponent extends BaseComponent {
         if (result.imageUrl) previewData.imageUrl = result.imageUrl;
 
         this.showUrlPreview(previewData);
-        
+
         // Auto-fill title and description if empty
         const titleInput = this.form?.querySelector('input[name="title"]') as HTMLInputElement;
         const descInput = this.form?.querySelector('textarea[name="description"]') as HTMLTextAreaElement;
-        
+
         if (result.title && !titleInput.value) {
           titleInput.value = result.title;
         }
-        
+
         if (result.description && !descInput.value) {
           descInput.value = result.description;
         }
@@ -784,12 +793,44 @@ export class LinkFormComponent extends BaseComponent {
     }
   }
 
-  private isValidUrl(url: string): boolean {
+  private isStandardHttpUrl(url: string): boolean {
     try {
-      new URL(url);
-      return true;
+      const urlObj = new URL(url);
+      return urlObj.protocol === 'http:' || urlObj.protocol === 'https:';
     } catch {
       return false;
+    }
+  }
+
+  private isValidUrl(url: string): boolean {
+    // Allow any non-empty string as a valid URL
+    // This supports custom schemes, templates, and deep links
+    // Examples:
+    // - Standard URLs: https://example.com
+    // - Custom schemes: myapp://page/123
+    // - Templates: merchant/{{publickey}}@{{domain}}
+    // - Deep links: app://action?param=value
+
+    if (!url || url.trim().length === 0) {
+      return false;
+    }
+
+    // Basic sanity checks - reject obviously invalid inputs
+    const trimmed = url.trim();
+
+    // Reject URLs that are just whitespace or contain only special characters
+    if (!/[a-zA-Z0-9]/.test(trimmed)) {
+      return false;
+    }
+
+    // Try standard URL validation first (for http/https URLs)
+    try {
+      new URL(trimmed);
+      return true;
+    } catch {
+      // If standard URL validation fails, allow it anyway
+      // This covers custom schemes, templates, and deep links
+      return true;
     }
   }
 

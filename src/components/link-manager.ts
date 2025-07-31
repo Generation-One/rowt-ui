@@ -258,8 +258,8 @@ export class LinkManager extends BaseComponent {
   private createLinkForm(): HTMLElement {
     const form = createElement('form', { id: 'create-link-form' });
     
-    // Target URL
-    const urlInput = this.createInput('url', 'https://example.com/page', '', true);
+    // Target URL - use 'text' type to allow custom schemes and templates
+    const urlInput = this.createInput('text', 'merchant/{{publickey}}@{{domain}}', '', true);
     urlInput.name = 'url';
     const urlGroup = this.createFormGroup(
       'Target URL:', 

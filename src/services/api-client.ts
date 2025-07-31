@@ -433,12 +433,25 @@ export class ApiClient {
   }
 
   async validateUrl(url: string): Promise<{ valid: boolean; title?: string; description?: string; imageUrl?: string }> {
-    // Basic URL validation - could be enhanced
+    // Accept any non-empty string as valid
+    // Only attempt to fetch metadata for standard HTTP/HTTPS URLs
+    if (!url || url.trim().length === 0) {
+      return { valid: false };
+    }
+
     try {
-      new URL(url);
+      const urlObj = new URL(url);
+      // For HTTP/HTTPS URLs, we could potentially fetch metadata
+      // For now, just return valid: true for all URLs that can be parsed
+      if (urlObj.protocol === 'http:' || urlObj.protocol === 'https:') {
+        // TODO: Could implement actual metadata fetching here
+        return { valid: true };
+      }
       return { valid: true };
     } catch {
-      return { valid: false };
+      // If URL parsing fails, still consider it valid for custom schemes
+      // This supports templates like merchant/{{publickey}}@{{domain}}
+      return { valid: true };
     }
   }
 
