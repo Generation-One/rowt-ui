@@ -171,7 +171,11 @@ export class ProjectManager extends BaseComponent {
   }
 
   private createProjectForm(): HTMLElement {
-    const form = createElement('form', { id: 'create-project-form' });
+    const container = createElement('div', { className: 'project-form-container' });
+    const form = createElement('form', {
+      id: 'create-project-form',
+      className: 'project-form'
+    });
 
     // Project name
     const nameInput = this.createInput('text', 'Enter project name', '', true);
@@ -260,11 +264,16 @@ export class ProjectManager extends BaseComponent {
     // Add form submit handler
     form.addEventListener('submit', this.handleCreateProject.bind(this));
 
-    return form;
+    container.appendChild(form);
+    return container;
   }
 
   private createEditProjectForm(project: Project): HTMLElement {
-    const form = createElement('form', { id: 'edit-project-form' });
+    const container = createElement('div', { className: 'project-form-container' });
+    const form = createElement('form', {
+      id: 'edit-project-form',
+      className: 'project-form'
+    });
 
     // Project name
     const nameInput = this.createInput('text', 'Enter project name', project.name, true);
@@ -362,7 +371,8 @@ export class ProjectManager extends BaseComponent {
     // Add form submit handler
     form.addEventListener('submit', (event) => this.handleEditProject(event, project));
 
-    return form;
+    container.appendChild(form);
+    return container;
   }
 
   private async handleCreateProject(event: Event): Promise<void> {

@@ -404,26 +404,26 @@ export class LinkListComponent extends BaseComponent {
     const actionsContainer = createElement('div', { className: 'table-actions' });
     
     // Edit button
-    const editBtn = this.createButton('Edit', 'btn btn-sm btn-primary', () => {
+    const editBtn = this.createIconButton('✏️', 'action-btn edit-btn', () => {
       this.config.onEdit(link);
     });
     editBtn.setAttribute('title', 'Edit link');
 
     // Delete button
-    const deleteBtn = this.createButton('Delete', 'btn btn-sm btn-danger', () => {
+    const deleteBtn = this.createIconButton('🗑️', 'action-btn delete-btn', () => {
       this.config.onDelete(link);
     });
     deleteBtn.setAttribute('title', 'Delete link');
 
     // Copy button (functional)
-    const copyBtn = this.createButton('Copy', 'btn btn-sm btn-secondary', async () => {
+    const copyBtn = this.createIconButton('📋', 'action-btn copy-btn', async () => {
       const shortUrl = await generateShortUrl(link.shortCode || link.id);
       this.copyToClipboard(shortUrl);
     });
     copyBtn.setAttribute('title', 'Copy short link to clipboard');
 
     // Analytics button (placeholder for future functionality)
-    const analyticsBtn = this.createButton('Analytics', 'btn btn-sm btn-outline-primary', () => {
+    const analyticsBtn = this.createIconButton('📊', 'action-btn analytics-btn', () => {
       this.showInfo('Analytics feature coming soon! Track clicks, referrers, and more.');
     });
     analyticsBtn.setAttribute('title', 'View link analytics (coming soon)');
@@ -470,26 +470,26 @@ export class LinkListComponent extends BaseComponent {
     const actions = createElement('div', { className: 'card-actions' });
 
     // Edit button
-    const editBtn = this.createButton('Edit', 'btn btn-sm btn-primary', () => {
+    const editBtn = this.createIconButton('✏️', 'action-btn edit-btn', () => {
       this.config.onEdit(link);
     });
     editBtn.setAttribute('title', 'Edit link');
 
     // Delete button
-    const deleteBtn = this.createButton('Delete', 'btn btn-sm btn-danger', () => {
+    const deleteBtn = this.createIconButton('🗑️', 'action-btn delete-btn', () => {
       this.config.onDelete(link);
     });
     deleteBtn.setAttribute('title', 'Delete link');
 
     // Copy button (functional)
-    const copyBtn = this.createButton('Copy', 'btn btn-sm btn-secondary', async () => {
+    const copyBtn = this.createIconButton('📋', 'action-btn copy-btn', async () => {
       const shortUrl = await generateShortUrl(link.shortCode || link.id);
       this.copyToClipboard(shortUrl);
     });
     copyBtn.setAttribute('title', 'Copy short link to clipboard');
 
     // Analytics button (placeholder for future functionality)
-    const analyticsBtn = this.createButton('Analytics', 'btn btn-sm btn-outline-primary', () => {
+    const analyticsBtn = this.createIconButton('📊', 'action-btn analytics-btn', () => {
       this.showInfo('Analytics feature coming soon! Track clicks, referrers, and more.');
     });
     analyticsBtn.setAttribute('title', 'View link analytics (coming soon)');
@@ -762,5 +762,16 @@ export class LinkListComponent extends BaseComponent {
 
   public clearSelectionPublic(): void {
     this.clearSelection();
+  }
+
+  private createIconButton(icon: string, className: string, onClick: () => void): HTMLButtonElement {
+    const button = createElement('button', {
+      textContent: icon,
+      className: className,
+      attributes: { type: 'button' }
+    }) as HTMLButtonElement;
+
+    button.addEventListener('click', onClick);
+    return button;
   }
 }

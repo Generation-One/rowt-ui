@@ -116,13 +116,13 @@ export class LinkFormComponent extends BaseComponent {
     this.form.appendChild(fallbackGroup);
 
     // Additional Metadata (JSONB) - Social media tags
-    const metadataGroup = this.createSocialMetadataEditor('Additional Metadata', 'additionalMetadata',
-      'Open Graph, Twitter Cards, and other social media metadata', this.config.link?.additionalMetadata);
+    const metadataGroup = this.createEnhancedMetadataEditor('Additional Metadata', 'additionalMetadata',
+      'Open Graph, Twitter Cards, and other social media metadata', this.config.link?.additionalMetadata, 'social');
     this.form.appendChild(metadataGroup);
 
     // Properties (JSONB) - Complex JSON for tracking/analytics
-    const propertiesGroup = this.createJsonEditor('Properties', 'properties',
-      'Custom properties for tracking, analytics, campaigns, etc.', this.config.link?.properties);
+    const propertiesGroup = this.createEnhancedMetadataEditor('Properties', 'properties',
+      'Custom properties for tracking, analytics, campaigns, etc.', this.config.link?.properties, 'analytics');
     this.form.appendChild(propertiesGroup);
 
     // Active status field (only for edit mode)
@@ -236,7 +236,7 @@ export class LinkFormComponent extends BaseComponent {
     return group;
   }
 
-  private createJsonEditor(label: string, name: string, description: string, initialData?: Record<string, any>): HTMLElement {
+  private createEnhancedMetadataEditor(label: string, name: string, description: string, initialData?: Record<string, any>, type: 'social' | 'analytics' = 'analytics'): HTMLElement {
     const group = createElement('div', { className: 'form-group metadata-group' });
 
     const labelElement = createElement('label', {
@@ -251,155 +251,96 @@ export class LinkFormComponent extends BaseComponent {
     });
 
     // Container for the metadata editor
-    const editorContainer = createElement('div', { className: 'metadata-editor' });
+    const editorContainer = createElement('div', { className: 'enhanced-metadata-editor' });
 
-    // Editor mode toggle
+    // Mode toggle
     const modeToggle = createElement('div', { className: 'editor-mode-toggle' });
-    const jsonModeBtn = createElement('button', {
-      textContent: 'JSON Editor',
-      className: 'btn btn-sm btn-outline-primary mode-btn active',
-      attributes: { type: 'button', 'data-mode': 'json' }
+    const kvModeBtn = createElement('button', {
+      textContent: '📝 Key-Value Editor',
+      className: 'btn btn-sm btn-primary mode-btn active',
+      attributes: { type: 'button', 'data-mode': 'kv' }
     });
     const templateModeBtn = createElement('button', {
-      textContent: 'Template',
+      textContent: '📋 Templates',
       className: 'btn btn-sm btn-outline-secondary mode-btn',
       attributes: { type: 'button', 'data-mode': 'template' }
     });
+    const jsonModeBtn = createElement('button', {
+      textContent: '⚙️ Raw JSON',
+      className: 'btn btn-sm btn-outline-secondary mode-btn',
+      attributes: { type: 'button', 'data-mode': 'json' }
+    });
 
-    modeToggle.appendChild(jsonModeBtn);
+    modeToggle.appendChild(kvModeBtn);
     modeToggle.appendChild(templateModeBtn);
+    modeToggle.appendChild(jsonModeBtn);
 
-    // JSON textarea for complex structures
-    const jsonTextarea = createElement('textarea', {
-      attributes: {
-        name: name,
-        id: name,
-        placeholder: this.getJsonPlaceholder(name),
-        rows: '12'
-      },
-      className: 'form-control json-editor'
-    }) as HTMLTextAreaElement;
+    // Key-Value Editor (default view)
+    const kvEditor = createElement('div', { className: 'kv-editor-enhanced' });
+    const kvContainer = createElement('div', { className: 'kv-container' });
 
-    // Pre-populate with existing data or template
+    // Add existing key-value pairs
     if (initialData && Object.keys(initialData).length > 0) {
-      jsonTextarea.value = JSON.stringify(initialData, null, 2);
+      Object.entries(initialData).forEach(([key, value]) => {
+        const pair = this.createEnhancedKeyValuePair(key, value, type);
+        kvContainer.appendChild(pair);
+      });
     } else {
-      jsonTextarea.value = this.getJsonTemplate(name);
+      // Add one empty pair to start
+      const emptyPair = this.createEnhancedKeyValuePair('', '', type);
+      kvContainer.appendChild(emptyPair);
     }
 
-    // Template view
-    const templateView = createElement('div', { className: 'template-view hidden' });
-    templateView.innerHTML = this.getTemplateHTML(name);
-
-    // Validation feedback
-    const validationFeedback = createElement('div', { className: 'validation-feedback' });
-
-    // Mode toggle handlers
-    jsonModeBtn.addEventListener('click', () => {
-      jsonModeBtn.classList.add('active');
-      jsonModeBtn.classList.remove('btn-outline-primary');
-      jsonModeBtn.classList.add('btn-primary');
-      templateModeBtn.classList.remove('active', 'btn-secondary');
-      templateModeBtn.classList.add('btn-outline-secondary');
-
-      jsonTextarea.classList.remove('hidden');
-      templateView.classList.add('hidden');
-    });
-
-    templateModeBtn.addEventListener('click', () => {
-      templateModeBtn.classList.add('active');
-      templateModeBtn.classList.remove('btn-outline-secondary');
-      templateModeBtn.classList.add('btn-secondary');
-      jsonModeBtn.classList.remove('active', 'btn-primary');
-      jsonModeBtn.classList.add('btn-outline-primary');
-
-      jsonTextarea.classList.add('hidden');
-      templateView.classList.remove('hidden');
-    });
-
-    // JSON validation
-    jsonTextarea.addEventListener('input', () => {
-      this.validateJsonInput(jsonTextarea, validationFeedback);
-    });
-
-    // Initial validation
-    this.validateJsonInput(jsonTextarea, validationFeedback);
-
-    editorContainer.appendChild(modeToggle);
-    editorContainer.appendChild(jsonTextarea);
-    editorContainer.appendChild(templateView);
-    editorContainer.appendChild(validationFeedback);
-
-    group.appendChild(labelElement);
-    group.appendChild(descElement);
-    group.appendChild(editorContainer);
-
-    return group;
-  }
-
-  private createSocialMetadataEditor(label: string, name: string, description: string, initialData?: Record<string, any>): HTMLElement {
-    const group = createElement('div', { className: 'form-group metadata-group' });
-
-    const labelElement = createElement('label', {
-      textContent: label,
-      className: 'form-label',
-      attributes: { for: name }
-    });
-
-    const descElement = createElement('small', {
-      textContent: description,
-      className: 'form-description'
-    });
-
-    // Container for the social metadata editor
-    const editorContainer = createElement('div', { className: 'social-metadata-editor' });
-
-    // Common social media fields
-    const fieldsContainer = createElement('div', { className: 'social-fields' });
-
-    // Title field
-    const titleField = this.createSocialField('Title', 'og:title', initialData?.['og:title'] || '');
-    fieldsContainer.appendChild(titleField);
-
-    // Description field
-    const descField = this.createSocialField('Description', 'og:description', initialData?.['og:description'] || '');
-    fieldsContainer.appendChild(descField);
-
-    // Image field
-    const imageField = this.createSocialField('Image URL', 'og:image', initialData?.['og:image'] || '');
-    fieldsContainer.appendChild(imageField);
-
-    // Type field
-    const typeField = this.createSocialField('Type', 'og:type', initialData?.['og:type'] || 'website');
-    fieldsContainer.appendChild(typeField);
-
-    // Twitter Card field
-    const twitterCardField = this.createSocialField('Twitter Card', 'twitter:card', initialData?.['twitter:card'] || 'summary_large_image');
-    fieldsContainer.appendChild(twitterCardField);
-
-    // Advanced JSON editor toggle
-    const advancedToggle = createElement('div', { className: 'advanced-toggle' });
-    const toggleBtn = createElement('button', {
-      textContent: '⚙️ Advanced JSON Editor',
-      className: 'btn btn-sm btn-outline-secondary',
+    const addPairBtn = createElement('button', {
+      textContent: '+ Add Pair',
+      className: 'btn btn-sm btn-outline-primary add-pair-btn',
       attributes: { type: 'button' }
     });
 
+    addPairBtn.addEventListener('click', () => {
+      const newPair = this.createEnhancedKeyValuePair('', '', type);
+      kvContainer.appendChild(newPair);
+    });
+
+    kvEditor.appendChild(kvContainer);
+    kvEditor.appendChild(addPairBtn);
+
+    // Template view
+    const templateView = createElement('div', { className: 'template-view hidden' });
+    templateView.innerHTML = this.getTemplateHTML(type);
+
+    // Add click handlers for template examples
+    templateView.addEventListener('click', (e) => {
+      const target = e.target as HTMLElement;
+      const templatePair = target.closest('.template-pair') as HTMLElement;
+      if (templatePair) {
+        const key = templatePair.getAttribute('data-key');
+        const value = templatePair.getAttribute('data-value');
+        if (key && value) {
+          // Add new pair with template data
+          const newPair = this.createEnhancedKeyValuePair(key, value, type);
+          kvContainer.appendChild(newPair);
+
+          // Switch back to KV mode to show the added pair
+          switchToMode('kv');
+
+          // Scroll to the new pair
+          newPair.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+      }
+    });
+
+    // JSON textarea
     const jsonEditor = createElement('div', { className: 'json-editor-section hidden' });
     const jsonTextarea = createElement('textarea', {
       attributes: {
         name: name,
         id: name,
-        placeholder: 'Enter additional JSON metadata...',
-        rows: '6'
+        placeholder: 'Enter JSON data...',
+        rows: '10'
       },
       className: 'form-control json-editor'
     }) as HTMLTextAreaElement;
-
-    // Pre-populate JSON editor with all data
-    if (initialData && Object.keys(initialData).length > 0) {
-      jsonTextarea.value = JSON.stringify(initialData, null, 2);
-    }
 
     // Validation feedback
     const validationFeedback = createElement('div', { className: 'validation-feedback' });
@@ -407,49 +348,100 @@ export class LinkFormComponent extends BaseComponent {
     jsonEditor.appendChild(jsonTextarea);
     jsonEditor.appendChild(validationFeedback);
 
-    // Toggle functionality
-    let isAdvancedMode = false;
-    toggleBtn.addEventListener('click', () => {
-      isAdvancedMode = !isAdvancedMode;
-      if (isAdvancedMode) {
-        // Switch to JSON mode
-        toggleBtn.textContent = '📝 Simple Fields';
-        toggleBtn.classList.remove('btn-outline-secondary');
-        toggleBtn.classList.add('btn-secondary');
-        fieldsContainer.classList.add('hidden');
+    // Mode switching logic
+    let currentMode = 'kv'; // Track current mode
+    const switchToMode = (mode: string) => {
+      if (currentMode === mode) return; // Don't switch if already in this mode
+
+      // Update button states
+      [kvModeBtn, templateModeBtn, jsonModeBtn].forEach(btn => {
+        btn.classList.remove('active', 'btn-primary', 'btn-secondary');
+        btn.classList.add('btn-outline-secondary');
+      });
+
+      // Hide all views
+      kvEditor.classList.add('hidden');
+      templateView.classList.add('hidden');
+      jsonEditor.classList.add('hidden');
+
+      if (mode === 'kv') {
+        kvModeBtn.classList.remove('btn-outline-secondary');
+        kvModeBtn.classList.add('btn-primary', 'active');
+        kvEditor.classList.remove('hidden');
+        // Only sync from JSON to KV if we're coming from JSON mode
+        if (currentMode === 'json') {
+          syncEnabled = false; // Disable sync during conversion
+          this.syncJsonToKV(jsonTextarea, kvContainer, type);
+          // Re-enable sync after DOM is fully updated
+          setTimeout(() => {
+            syncEnabled = true;
+          }, 500); // Increased delay to ensure DOM is ready
+        }
+      } else if (mode === 'template') {
+        templateModeBtn.classList.remove('btn-outline-secondary');
+        templateModeBtn.classList.add('btn-secondary', 'active');
+        templateView.classList.remove('hidden');
+      } else if (mode === 'json') {
+        jsonModeBtn.classList.remove('btn-outline-secondary');
+        jsonModeBtn.classList.add('btn-secondary', 'active');
         jsonEditor.classList.remove('hidden');
-
-        // Sync simple fields to JSON
-        this.syncFieldsToJson(fieldsContainer, jsonTextarea);
-      } else {
-        // Switch to simple mode
-        toggleBtn.textContent = '⚙️ Advanced JSON Editor';
-        toggleBtn.classList.remove('btn-secondary');
-        toggleBtn.classList.add('btn-outline-secondary');
-        fieldsContainer.classList.remove('hidden');
-        jsonEditor.classList.add('hidden');
-
-        // Sync JSON to simple fields
-        this.syncJsonToFields(jsonTextarea, fieldsContainer);
+        // Only sync from KV to JSON if we're coming from KV mode
+        if (currentMode === 'kv') {
+          this.syncKVToJson(kvContainer, jsonTextarea);
+        }
+        this.validateJsonInput(jsonTextarea, validationFeedback);
       }
-    });
+
+      currentMode = mode;
+    };
+
+    // Event handlers
+    kvModeBtn.addEventListener('click', () => switchToMode('kv'));
+    templateModeBtn.addEventListener('click', () => switchToMode('template'));
+    jsonModeBtn.addEventListener('click', () => switchToMode('json'));
 
     // JSON validation
     jsonTextarea.addEventListener('input', () => {
       this.validateJsonInput(jsonTextarea, validationFeedback);
     });
 
-    // Sync simple fields to JSON when they change
-    fieldsContainer.addEventListener('input', () => {
-      if (isAdvancedMode) {
-        this.syncFieldsToJson(fieldsContainer, jsonTextarea);
-      }
+    // Sync KV changes to JSON with debounce
+    let syncTimeout: NodeJS.Timeout;
+    let syncEnabled = true; // Flag to temporarily disable sync
+
+    kvContainer.addEventListener('input', () => {
+      if (!syncEnabled) return; // Skip sync if disabled
+
+      clearTimeout(syncTimeout);
+      syncTimeout = setTimeout(() => {
+        this.syncKVToJson(kvContainer, jsonTextarea);
+      }, 300); // 300ms debounce
     });
 
-    advancedToggle.appendChild(toggleBtn);
+    // Initial sync - only if there's no existing data in JSON
+    if (!jsonTextarea.value.trim()) {
+      this.syncKVToJson(kvContainer, jsonTextarea);
+    }
 
-    editorContainer.appendChild(fieldsContainer);
-    editorContainer.appendChild(advancedToggle);
+    // Add datalists for key suggestions
+    const datalistId = type === 'social' ? 'social-keys-datalist' : 'analytics-keys-datalist';
+    if (!document.getElementById(datalistId)) {
+      const datalist = createElement('datalist', { attributes: { id: datalistId } });
+      const suggestions = type === 'social'
+        ? ['og:title', 'og:description', 'og:image', 'og:type', 'og:url', 'twitter:card', 'twitter:title', 'twitter:description', 'twitter:image', 'author', 'keywords', 'robots']
+        : ['campaign', 'utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term', 'product', 'tags', 'user', 'customData', 'source', 'medium', 'content'];
+
+      suggestions.forEach(suggestion => {
+        const option = createElement('option', { attributes: { value: suggestion } });
+        datalist.appendChild(option);
+      });
+
+      document.body.appendChild(datalist);
+    }
+
+    editorContainer.appendChild(modeToggle);
+    editorContainer.appendChild(kvEditor);
+    editorContainer.appendChild(templateView);
     editorContainer.appendChild(jsonEditor);
 
     group.appendChild(labelElement);
@@ -459,218 +451,261 @@ export class LinkFormComponent extends BaseComponent {
     return group;
   }
 
-  private createSocialField(label: string, key: string, value: string): HTMLElement {
-    const fieldGroup = createElement('div', { className: 'social-field' });
+  private createEnhancedKeyValuePair(key: string, value: any, type: 'social' | 'analytics'): HTMLElement {
+    const pair = createElement('div', { className: 'kv-pair-enhanced' });
 
-    const labelElement = createElement('label', {
-      textContent: label,
-      className: 'social-field-label'
-    });
-
-    const input = createElement('input', {
+    const keyInput = createElement('input', {
       attributes: {
-        type: key.includes('image') ? 'url' : 'text',
-        value: value,
-        placeholder: this.getSocialFieldPlaceholder(key),
-        'data-key': key
+        type: 'text',
+        placeholder: 'Key',
+        value: key
       },
-      className: 'form-control social-field-input'
+      className: 'form-control kv-key'
+    }) as HTMLInputElement;
+
+    // Add suggestions dropdown for keys
+    if (type === 'social') {
+      keyInput.setAttribute('list', 'social-keys-datalist');
+    } else {
+      keyInput.setAttribute('list', 'analytics-keys-datalist');
+    }
+
+    const valueContainer = createElement('div', { className: 'kv-value-container' });
+    const valueInput = createElement('textarea', {
+      attributes: {
+        placeholder: 'Value (can be text or JSON)',
+        rows: '1'
+      },
+      className: 'form-control kv-value'
+    }) as HTMLTextAreaElement;
+
+    // Set the value after creation to ensure it's properly set
+    const valueToSet = typeof value === 'string' ? value : JSON.stringify(value, null, 2);
+    valueInput.value = valueToSet;
+
+    // Ensure the value is properly set by using both attribute and property
+    valueInput.setAttribute('value', valueToSet);
+
+    // Auto-resize textarea
+    valueInput.addEventListener('input', () => {
+      valueInput.style.height = 'auto';
+      valueInput.style.height = Math.max(32, valueInput.scrollHeight) + 'px';
     });
 
-    fieldGroup.appendChild(labelElement);
-    fieldGroup.appendChild(input);
+    // Format JSON button
+    const formatBtn = createElement('button', {
+      textContent: '{}',
+      className: 'btn btn-sm btn-outline-info format-btn',
+      attributes: { type: 'button', title: 'Format as JSON' }
+    });
 
-    return fieldGroup;
-  }
-
-  private getSocialFieldPlaceholder(key: string): string {
-    const placeholders: Record<string, string> = {
-      'og:title': 'Your page title',
-      'og:description': 'Brief description of your content',
-      'og:image': 'https://example.com/image.jpg',
-      'og:type': 'website',
-      'twitter:card': 'summary_large_image'
-    };
-    return placeholders[key] || '';
-  }
-
-  private syncFieldsToJson(fieldsContainer: HTMLElement, jsonTextarea: HTMLTextAreaElement): void {
-    const inputs = fieldsContainer.querySelectorAll('.social-field-input') as NodeListOf<HTMLInputElement>;
-    const data: Record<string, string> = {};
-
-    inputs.forEach(input => {
-      const key = input.getAttribute('data-key');
-      const value = input.value.trim();
-      if (key && value) {
-        data[key] = value;
+    formatBtn.addEventListener('click', () => {
+      try {
+        const parsed = JSON.parse(valueInput.value);
+        valueInput.value = JSON.stringify(parsed, null, 2);
+        valueInput.style.height = 'auto';
+        valueInput.style.height = Math.max(32, valueInput.scrollHeight) + 'px';
+      } catch (error) {
+        // If not valid JSON, try to wrap in quotes
+        if (valueInput.value && !valueInput.value.startsWith('"')) {
+          valueInput.value = `"${valueInput.value.replace(/"/g, '\\"')}"`;
+        }
       }
     });
 
-    // Preserve any existing JSON data that's not in simple fields
-    try {
-      const existingData = jsonTextarea.value.trim() ? JSON.parse(jsonTextarea.value) : {};
-      const mergedData = { ...existingData, ...data };
-      jsonTextarea.value = JSON.stringify(mergedData, null, 2);
-    } catch {
-      jsonTextarea.value = JSON.stringify(data, null, 2);
-    }
+    const removeBtn = createElement('button', {
+      textContent: '×',
+      className: 'btn btn-sm btn-outline-danger remove-pair-btn',
+      attributes: { type: 'button', title: 'Remove this pair' }
+    });
+
+    removeBtn.addEventListener('click', () => {
+      pair.remove();
+    });
+
+    valueContainer.appendChild(valueInput);
+    valueContainer.appendChild(formatBtn);
+
+    pair.appendChild(keyInput);
+    pair.appendChild(valueContainer);
+    pair.appendChild(removeBtn);
+
+    // Initial resize
+    setTimeout(() => {
+      valueInput.style.height = 'auto';
+      valueInput.style.height = Math.max(32, valueInput.scrollHeight) + 'px';
+    }, 0);
+
+    return pair;
   }
 
-  private syncJsonToFields(jsonTextarea: HTMLTextAreaElement, fieldsContainer: HTMLElement): void {
+  private syncKVToJson(kvContainer: HTMLElement, jsonTextarea: HTMLTextAreaElement): void {
+    const pairs = kvContainer.querySelectorAll('.kv-pair-enhanced');
+    const data: Record<string, any> = {};
+
+    pairs.forEach(pair => {
+      const keyInput = pair.querySelector('.kv-key') as HTMLInputElement;
+      const valueInput = pair.querySelector('.kv-value') as HTMLTextAreaElement;
+
+      if (keyInput.value.trim()) {
+        let value: any = valueInput.value.trim();
+
+        // Only try to parse as JSON if the value is not empty
+        if (value) {
+          try {
+            // Try to parse as JSON
+            const parsed = JSON.parse(value);
+            value = parsed;
+          } catch {
+            // Keep as string if not valid JSON
+            // This is fine - strings are valid values too
+          }
+        } else {
+          // If value is empty, set it as empty string
+          value = '';
+        }
+
+        data[keyInput.value.trim()] = value;
+      }
+    });
+
+    jsonTextarea.value = Object.keys(data).length > 0 ? JSON.stringify(data, null, 2) : '';
+  }
+
+  private syncJsonToKV(jsonTextarea: HTMLTextAreaElement, kvContainer: HTMLElement, type: 'social' | 'analytics'): void {
     try {
       const data = jsonTextarea.value.trim() ? JSON.parse(jsonTextarea.value) : {};
-      const inputs = fieldsContainer.querySelectorAll('.social-field-input') as NodeListOf<HTMLInputElement>;
 
-      inputs.forEach(input => {
-        const key = input.getAttribute('data-key');
-        if (key && data[key]) {
-          input.value = data[key];
-        }
-      });
+      // Clear existing pairs
+      kvContainer.innerHTML = '';
+
+      // Add pairs from JSON
+      if (Object.keys(data).length > 0) {
+        Object.entries(data).forEach(([key, value]) => {
+          const pair = this.createEnhancedKeyValuePair(key, value, type);
+          kvContainer.appendChild(pair);
+        });
+
+        // Trigger auto-resize for all textareas after they're all added to DOM
+        setTimeout(() => {
+          const valueInputs = kvContainer.querySelectorAll('.kv-value') as NodeListOf<HTMLTextAreaElement>;
+          valueInputs.forEach(valueInput => {
+            valueInput.style.height = 'auto';
+            valueInput.style.height = Math.max(32, valueInput.scrollHeight) + 'px';
+          });
+        }, 50); // Small delay to ensure DOM is updated
+      } else {
+        // Add empty pair if no data
+        const emptyPair = this.createEnhancedKeyValuePair('', '', type);
+        kvContainer.appendChild(emptyPair);
+      }
     } catch (error) {
-      console.warn('Invalid JSON in social metadata editor:', error);
+      console.warn('Invalid JSON in metadata editor:', error);
+      // Add empty pair on error
+      kvContainer.innerHTML = '';
+      const emptyPair = this.createEnhancedKeyValuePair('', '', type);
+      kvContainer.appendChild(emptyPair);
     }
   }
 
-  private getJsonPlaceholder(fieldName: string): string {
-    if (fieldName === 'additionalMetadata') {
-      return 'Enter JSON metadata for Open Graph, Twitter Cards, etc.\nExample: {"og:title": "My Page", "og:image": "https://example.com/image.jpg"}';
-    } else if (fieldName === 'properties') {
-      return 'Enter JSON properties for tracking, analytics, etc.\nExample: {"campaign": "summer-2024", "source": "email"}';
-    }
-    return 'Enter valid JSON...';
-  }
 
-  private getJsonTemplate(fieldName: string): string {
-    if (fieldName === 'additionalMetadata') {
-      return `{
-  "og:title": "Your Page Title",
-  "og:description": "Your page description",
-  "og:image": "https://example.com/image.jpg",
-  "og:type": "website",
-  "twitter:card": "summary_large_image",
-  "twitter:title": "Your Page Title",
-  "twitter:description": "Your page description"
-}`;
-    } else if (fieldName === 'properties') {
-      return `{
-  "campaign": {
-    "name": "summer-2024",
-    "channel": "email",
-    "variant": "A"
-  },
-  "analytics": {
-    "source": "newsletter",
-    "medium": "email",
-    "content": "hero-banner"
-  },
-  "product": {
-    "sku": "PROD-123",
-    "category": "electronics",
-    "price": 299.99,
-    "currency": "USD"
-  },
-  "user": {
-    "segmentId": "high-value",
-    "cohort": "2024-Q2"
-  },
-  "tags": ["featured", "sale", "limited-time"],
-  "customData": {
-    "experimentId": "exp-456",
-    "metadata": {
-      "version": "v2",
-      "timestamp": "${new Date().toISOString()}"
-    }
-  }
-}`;
-    }
-    return '{}';
-  }
 
-  private getTemplateHTML(fieldName: string): string {
-    if (fieldName === 'additionalMetadata') {
+
+
+  private getTemplateHTML(type: 'social' | 'analytics'): string {
+    if (type === 'social') {
       return `
         <div class="template-content">
-          <h4>Additional Metadata Examples</h4>
+          <h4>Social Media Metadata Templates</h4>
           <div class="template-section">
-            <h5>Open Graph (Facebook, LinkedIn)</h5>
-            <code>
-              "og:title": "Your Page Title"<br>
-              "og:description": "Your page description"<br>
-              "og:image": "https://example.com/image.jpg"<br>
-              "og:type": "website"
-            </code>
+            <h5>📘 Open Graph (Facebook, LinkedIn)</h5>
+            <div class="template-examples">
+              <div class="template-pair" data-key="og:title" data-value="Your Amazing Page Title">
+                <strong>og:title</strong> → "Your Amazing Page Title"
+              </div>
+              <div class="template-pair" data-key="og:description" data-value="A compelling description of your content">
+                <strong>og:description</strong> → "A compelling description of your content"
+              </div>
+              <div class="template-pair" data-key="og:image" data-value="https://example.com/image.jpg">
+                <strong>og:image</strong> → "https://example.com/image.jpg"
+              </div>
+              <div class="template-pair" data-key="og:type" data-value="website">
+                <strong>og:type</strong> → "website"
+              </div>
+            </div>
           </div>
           <div class="template-section">
-            <h5>Twitter Cards</h5>
-            <code>
-              "twitter:card": "summary_large_image"<br>
-              "twitter:title": "Your Page Title"<br>
-              "twitter:description": "Your page description"<br>
-              "twitter:image": "https://example.com/image.jpg"
-            </code>
+            <h5>🐦 Twitter Cards</h5>
+            <div class="template-examples">
+              <div class="template-pair" data-key="twitter:card" data-value="summary_large_image">
+                <strong>twitter:card</strong> → "summary_large_image"
+              </div>
+              <div class="template-pair" data-key="twitter:title" data-value="Your Page Title">
+                <strong>twitter:title</strong> → "Your Page Title"
+              </div>
+              <div class="template-pair" data-key="twitter:description" data-value="Your page description">
+                <strong>twitter:description</strong> → "Your page description"
+              </div>
+            </div>
           </div>
           <div class="template-section">
-            <h5>Custom Meta Tags</h5>
-            <code>
-              "author": "Your Name"<br>
-              "keywords": "keyword1, keyword2"<br>
-              "robots": "index, follow"
-            </code>
+            <h5>🔧 Custom Meta Tags</h5>
+            <div class="template-examples">
+              <div class="template-pair" data-key="author" data-value="Your Name">
+                <strong>author</strong> → "Your Name"
+              </div>
+              <div class="template-pair" data-key="keywords" data-value="keyword1, keyword2, keyword3">
+                <strong>keywords</strong> → "keyword1, keyword2, keyword3"
+              </div>
+            </div>
           </div>
+          <p class="template-note">💡 Click any example above to add it to your metadata!</p>
         </div>
       `;
-    } else if (fieldName === 'properties') {
+    } else {
       return `
         <div class="template-content">
-          <h4>Properties Examples</h4>
+          <h4>Analytics & Tracking Templates</h4>
           <div class="template-section">
-            <h5>Campaign Tracking</h5>
-            <code>
-              "campaign": {<br>
-              &nbsp;&nbsp;"name": "summer-2024",<br>
-              &nbsp;&nbsp;"channel": "email",<br>
-              &nbsp;&nbsp;"variant": "A"<br>
-              }
-            </code>
+            <h5>📊 Campaign Tracking</h5>
+            <div class="template-examples">
+              <div class="template-pair" data-key="campaign" data-value='{"name": "summer-2024", "channel": "email", "variant": "A"}'>
+                <strong>campaign</strong> → {"name": "summer-2024", "channel": "email", "variant": "A"}
+              </div>
+              <div class="template-pair" data-key="utm_source" data-value="newsletter">
+                <strong>utm_source</strong> → "newsletter"
+              </div>
+              <div class="template-pair" data-key="utm_medium" data-value="email">
+                <strong>utm_medium</strong> → "email"
+              </div>
+            </div>
           </div>
           <div class="template-section">
-            <h5>Analytics Data</h5>
-            <code>
-              "analytics": {<br>
-              &nbsp;&nbsp;"source": "newsletter",<br>
-              &nbsp;&nbsp;"medium": "email",<br>
-              &nbsp;&nbsp;"content": "hero-banner"<br>
-              }
-            </code>
+            <h5>🛍️ Product Information</h5>
+            <div class="template-examples">
+              <div class="template-pair" data-key="product" data-value='{"sku": "PROD-123", "category": "electronics", "price": 299.99, "currency": "USD"}'>
+                <strong>product</strong> → {"sku": "PROD-123", "category": "electronics", "price": 299.99, "currency": "USD"}
+              </div>
+              <div class="template-pair" data-key="tags" data-value='["featured", "sale", "limited-time"]'>
+                <strong>tags</strong> → ["featured", "sale", "limited-time"]
+              </div>
+            </div>
           </div>
           <div class="template-section">
-            <h5>Product Information</h5>
-            <code>
-              "product": {<br>
-              &nbsp;&nbsp;"sku": "PROD-123",<br>
-              &nbsp;&nbsp;"category": "electronics",<br>
-              &nbsp;&nbsp;"price": 299.99,<br>
-              &nbsp;&nbsp;"currency": "USD"<br>
-              }
-            </code>
+            <h5>👤 User Segmentation</h5>
+            <div class="template-examples">
+              <div class="template-pair" data-key="user" data-value='{"segmentId": "high-value", "cohort": "2024-Q2"}'>
+                <strong>user</strong> → {"segmentId": "high-value", "cohort": "2024-Q2"}
+              </div>
+              <div class="template-pair" data-key="customData" data-value='{"experimentId": "exp-456", "metadata": {"version": "v2"}}'>
+                <strong>customData</strong> → {"experimentId": "exp-456", "metadata": {"version": "v2"}}
+              </div>
+            </div>
           </div>
-          <div class="template-section">
-            <h5>Arrays and Nested Objects</h5>
-            <code>
-              "tags": ["featured", "sale", "limited-time"],<br>
-              "customData": {<br>
-              &nbsp;&nbsp;"experimentId": "exp-456",<br>
-              &nbsp;&nbsp;"metadata": {<br>
-              &nbsp;&nbsp;&nbsp;&nbsp;"version": "v2"<br>
-              &nbsp;&nbsp;}<br>
-              }
-            </code>
-          </div>
+          <p class="template-note">💡 Click any example above to add it to your properties!</p>
         </div>
       `;
     }
-    return '<div class="template-content"><p>No template available</p></div>';
   }
 
   private validateJsonInput(textarea: HTMLTextAreaElement, feedbackElement: HTMLElement): void {
@@ -838,37 +873,20 @@ export class LinkFormComponent extends BaseComponent {
 
     // Parse metadata fields
     try {
-      // Handle social metadata editor (additionalMetadata)
-      const socialEditor = this.form.querySelector('.social-metadata-editor');
-      if (socialEditor) {
-        const jsonEditor = socialEditor.querySelector('.json-editor-section');
-        const fieldsContainer = socialEditor.querySelector('.social-fields');
+      // Handle enhanced metadata editors
+      const metadataEditors = this.form.querySelectorAll('.enhanced-metadata-editor');
 
-        if (jsonEditor && !jsonEditor.classList.contains('hidden')) {
-          // Advanced JSON mode
-          const jsonTextarea = jsonEditor.querySelector('.json-editor') as HTMLTextAreaElement;
-          data.additionalMetadata = jsonTextarea.value.trim() ? JSON.parse(jsonTextarea.value) : {};
-        } else if (fieldsContainer) {
-          // Simple fields mode
-          const inputs = fieldsContainer.querySelectorAll('.social-field-input') as NodeListOf<HTMLInputElement>;
-          const socialData: Record<string, string> = {};
-
-          inputs.forEach(input => {
-            const key = input.getAttribute('data-key');
-            const value = input.value.trim();
-            if (key && value) {
-              socialData[key] = value;
-            }
-          });
-
-          data.additionalMetadata = socialData;
+      metadataEditors.forEach(editor => {
+        const textarea = editor.querySelector('.json-editor') as HTMLTextAreaElement;
+        if (textarea) {
+          const fieldName = textarea.name;
+          if (fieldName === 'additionalMetadata') {
+            data.additionalMetadata = textarea.value.trim() ? JSON.parse(textarea.value) : {};
+          } else if (fieldName === 'properties') {
+            data.properties = textarea.value.trim() ? JSON.parse(textarea.value) : {};
+          }
         }
-      }
-
-      // Handle properties JSON editor
-      if (data.properties) {
-        data.properties = data.properties.trim() ? JSON.parse(data.properties) : {};
-      }
+      });
     } catch (error) {
       this.showError('Invalid JSON in metadata fields. Please check your JSON syntax.');
       return;
