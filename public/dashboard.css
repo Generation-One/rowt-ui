@@ -1160,7 +1160,8 @@ body {
 .delete-btn {
   color: #ef4444;
   font-weight: bold;
-  font-size: 16px;
+  font-size: 29px !important;
+  padding-top: 2px;
 }
 
 .delete-btn:hover {
