@@ -39,7 +39,7 @@ echo 🔧 Testing Development Setup
 echo ----------------------------
 
 echo ✅ Building development image...
-docker-compose build rowt-ui-dev
+docker-compose build --build-arg BUILD_MODE=development rowt-ui-dev
 if errorlevel 1 (
     echo ❌ Failed to build development image
     exit /b 1
@@ -78,7 +78,7 @@ echo 🚀 Testing Production Setup
 echo ---------------------------
 
 echo ✅ Building production image...
-docker-compose -f docker-compose.prod.yml build rowt-ui
+docker-compose -f docker-compose.prod.yml build --build-arg BUILD_MODE=production rowt-ui
 if errorlevel 1 (
     echo ❌ Failed to build production image
     exit /b 1

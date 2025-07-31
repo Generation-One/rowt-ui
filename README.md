@@ -104,9 +104,11 @@ Access at: `http://localhost:3000`
 
 #### Available Docker Compose Files
 
-- `docker-compose.yml` - Base configuration
+- `docker-compose.yml` - Base configuration with unified Dockerfile
 - `docker-compose.override.yml` - Development overrides (auto-loaded)
-- `docker-compose.prod.yml` - Production configuration with Nginx
+- `docker-compose.prod.yml` - Production configuration
+
+**Note**: All configurations use the same unified Dockerfile with different `BUILD_MODE` arguments.
 
 #### Makefile Commands
 
@@ -133,12 +135,13 @@ docker run -d -p 80:80 --name rowt-ui rowt-ui:latest
 
 #### Features
 
-- **Multi-stage builds** for optimized image sizes
+- **Unified Dockerfile** - Single Dockerfile for both development and production
+- **Build mode switching** - Uses `BUILD_MODE` argument to control behavior
 - **Development mode** with hot reloading and volume mounting
 - **Production mode** with Nginx for optimal performance
 - **Health checks** for container monitoring
 - **Traefik integration** for reverse proxy and SSL
-- **Security headers** and performance optimizations
+- **Simplified maintenance** - No separate Dockerfiles to maintain
 
 See [DOCKER.md](DOCKER.md) for detailed Docker documentation.
 

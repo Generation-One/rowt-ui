@@ -1,16 +1,16 @@
-# Multi-stage build for Rowt UI
-FROM node:18-alpine AS builder
+# Unified Dockerfile for Rowt UI (Development and Production)
+FROM node:18-alpine
 
 # Set working directory
 WORKDIR /app
 
-# Install build dependencies
-RUN apk add --no-cache wget
+# Install system dependencies
+RUN apk add --no-cache wget curl
 
 # Copy package files
 COPY package*.json ./
 
-# Install all dependencies (including dev dependencies for build)
+# Install all dependencies
 RUN npm ci
 
 # Copy source code
@@ -19,29 +19,31 @@ COPY . .
 # Set build-time environment variables
 ARG ROWT_API_ENDPOINT=https://your-rowt-server.com
 ARG NODE_ENV=production
+ARG BUILD_MODE=production
 
 # Create .env file for build process
 RUN echo "ROWT_API_ENDPOINT=${ROWT_API_ENDPOINT}" > .env && \
     echo "NODE_ENV=${NODE_ENV}" >> .env
 
-# Build the application
-RUN npm run build
+# Conditional build based on BUILD_MODE
+RUN if [ "$BUILD_MODE" = "production" ]; then \
+      npm run build; \
+    fi
 
-# Production stage
-FROM nginx:alpine
+# Copy entrypoint script
+COPY docker-entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
-# Copy built application from builder stage
-COPY --from=builder /app/dist /usr/share/nginx/html
+# Expose ports (8080 for dev, 80 for production)
+EXPOSE 8080 80
 
-# Copy custom nginx configuration
-COPY nginx.conf /etc/nginx/nginx.conf
+# Health check (works for both dev and production)
+HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
+  CMD if [ "$BUILD_MODE" = "development" ]; then \
+        curl -f http://localhost:8080/ || exit 1; \
+      else \
+        wget --no-verbose --tries=1 --spider http://localhost/ || exit 1; \
+      fi
 
-# Expose port 80
-EXPOSE 80
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost/ || exit 1
-
-# Start nginx
-CMD ["nginx", "-g", "daemon off;"]
+# Use entrypoint script
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]

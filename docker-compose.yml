@@ -31,10 +31,11 @@ services:
   rowt-ui-dev:
     build:
       context: .
-      dockerfile: Dockerfile.dev
+      dockerfile: Dockerfile
       args:
         - ROWT_API_ENDPOINT=${ROWT_API_ENDPOINT:-https://your-rowt-server.com}
         - NODE_ENV=${NODE_ENV:-development}
+        - BUILD_MODE=development
     container_name: rowt-ui-dev
     ports:
       - "8080:8080"

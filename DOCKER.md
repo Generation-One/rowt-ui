@@ -85,14 +85,18 @@ PROD_PORT=3000
 ### rowt-ui (Production)
 - **Port**: 3000:80
 - **Purpose**: Production-ready application with Nginx
+- **Build Mode**: `BUILD_MODE=production`
 - **Health Check**: Included
 - **Auto-restart**: Yes
 
 ### rowt-ui-dev (Development)
 - **Port**: 8080:8080
 - **Purpose**: Development with hot reloading
+- **Build Mode**: `BUILD_MODE=development`
 - **Volumes**: Source code mounted for live editing
 - **Health Check**: Included
+
+**Note**: Both services use the same unified Dockerfile with different build arguments.
 
 ## Commands
 

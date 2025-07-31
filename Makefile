@@ -34,7 +34,7 @@ dev:
 
 dev-build:
 	@echo "Building and starting development environment..."
-	docker-compose build rowt-ui-dev
+	docker-compose build --build-arg BUILD_MODE=development rowt-ui-dev
 	docker-compose up -d rowt-ui-dev
 	@echo "Development server available at http://localhost:8080"
 
@@ -49,7 +49,7 @@ prod:
 
 prod-build:
 	@echo "Building and starting production environment..."
-	docker-compose -f docker-compose.yml -f docker-compose.prod.yml build rowt-ui
+	docker-compose -f docker-compose.yml -f docker-compose.prod.yml build --build-arg BUILD_MODE=production rowt-ui
 	docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d rowt-ui
 	@echo "Production server available at http://localhost:3000"
 
@@ -104,7 +104,7 @@ test:
 setup:
 	@echo "Setting up Rowt UI development environment..."
 	@echo "1. Building development image..."
-	docker-compose build rowt-ui-dev
+	docker-compose build --build-arg BUILD_MODE=development rowt-ui-dev
 	@echo "2. Starting development environment..."
 	docker-compose up -d rowt-ui-dev
 	@echo "3. Waiting for container to be ready..."

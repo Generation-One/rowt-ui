@@ -60,7 +60,7 @@ echo "🔧 Testing Development Setup"
 echo "----------------------------"
 
 print_status "Building development image..."
-docker-compose build rowt-ui-dev
+docker-compose build --build-arg BUILD_MODE=development rowt-ui-dev
 
 print_status "Starting development container..."
 docker-compose up -d rowt-ui-dev
@@ -103,7 +103,7 @@ echo "🚀 Testing Production Setup"
 echo "---------------------------"
 
 print_status "Building production image..."
-docker-compose -f docker-compose.prod.yml build rowt-ui
+docker-compose -f docker-compose.prod.yml build --build-arg BUILD_MODE=production rowt-ui
 
 print_status "Starting production container..."
 docker-compose -f docker-compose.prod.yml up -d rowt-ui
