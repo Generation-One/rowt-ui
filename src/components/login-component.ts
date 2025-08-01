@@ -40,7 +40,7 @@ export class LoginComponent extends BaseComponent {
     });
 
     // Email field
-    const emailInput = this.createInput('email', 'Enter your email', 'admin@example.com', true);
+    const emailInput = this.createInput('email', 'Enter your email', '', true);
     emailInput.name = 'email';
     const emailGroup = this.createFormGroup('Email:', emailInput, 'email');
 
