@@ -1,6 +1,6 @@
 import { BaseComponent } from './base-component.js';
 import { createElement, querySelector } from '../utils/dom-helpers.js';
-import QRCode from 'qrcode';
+import * as QRCode from 'qrcode';
 import type { Link } from '../types/api.js';
 
 export interface QRCodePageConfig {
@@ -354,7 +354,6 @@ export class QRCodeModalComponent extends BaseComponent {
       // Generate QR code with proper aspect ratio
       await QRCode.toCanvas(this.qrCanvas, this.config.shortUrl, {
         width: this.qrOptions.size,
-        height: this.qrOptions.size, // Ensure square aspect ratio
         margin: this.qrOptions.margin,
         color: {
           dark: this.qrOptions.foregroundColor,
