@@ -83,6 +83,12 @@ export class LinkFormComponent extends BaseComponent {
     this.urlPreview = createElement('div', { className: 'url-preview hidden' });
     this.form.appendChild(this.urlPreview);
 
+    // Custom Shortcode field (only for create mode)
+    if (this.config.mode === 'create') {
+      const shortcodeGroup = this.createCustomShortcodeFormGroup();
+      this.form.appendChild(shortcodeGroup);
+    }
+
     // Title field
     const titleGroup = this.createLinkFormGroup('Title', 'text', 'title', false, 'Optional title for the link...');
     const titleInput = titleGroup.querySelector('input') as HTMLInputElement;
@@ -233,6 +239,49 @@ export class LinkFormComponent extends BaseComponent {
     group.appendChild(labelEl);
     group.appendChild(input);
     
+    return group;
+  }
+
+  private createCustomShortcodeFormGroup(): HTMLElement {
+    const group = createElement('div', { className: 'form-group custom-shortcode-group' });
+
+    const labelEl = createElement('label', {
+      textContent: 'Custom Shortcode (optional)',
+      attributes: { for: 'customShortcode' },
+      className: 'form-label'
+    });
+
+    const input = createElement('input', {
+      attributes: {
+        type: 'text',
+        id: 'customShortcode',
+        name: 'customShortcode',
+        placeholder: 'my-custom-link',
+        maxlength: '12'
+      },
+      className: 'form-control'
+    }) as HTMLInputElement;
+
+    // Create help text
+    const helpText = createElement('small', {
+      textContent: 'Leave empty for auto-generated shortcode. Use letters, numbers, hyphens, and underscores only (1-12 characters).',
+      className: 'form-text text-muted'
+    });
+
+    // Create validation feedback element
+    const validationFeedback = createElement('div', {
+      className: 'validation-feedback'
+    });
+
+    // Add real-time validation
+    input.addEventListener('input', this.validateCustomShortcode.bind(this));
+    input.addEventListener('blur', this.validateCustomShortcode.bind(this));
+
+    group.appendChild(labelEl);
+    group.appendChild(input);
+    group.appendChild(helpText);
+    group.appendChild(validationFeedback);
+
     return group;
   }
 
@@ -890,6 +939,147 @@ export class LinkFormComponent extends BaseComponent {
     this.urlPreview.innerHTML = '';
   }
 
+  private validateCustomShortcode(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const value = input.value.trim();
+    const group = input.closest('.custom-shortcode-group') as HTMLElement;
+    const feedback = group?.querySelector('.validation-feedback') as HTMLElement;
+
+    if (!feedback) return;
+
+    // Clear previous validation state
+    input.classList.remove('is-valid', 'is-invalid');
+    feedback.className = 'validation-feedback';
+    feedback.textContent = '';
+
+    // If empty, it's valid (optional field)
+    if (!value) {
+      input.classList.add('is-valid');
+      feedback.className = 'validation-feedback valid-feedback';
+      feedback.textContent = 'Auto-generated shortcode will be used';
+      return;
+    }
+
+    // Validate format: letters, numbers, hyphens, underscores only
+    const validFormat = /^[a-zA-Z0-9_-]+$/.test(value);
+
+    // Validate length: 1-12 characters
+    const validLength = value.length >= 1 && value.length <= 12;
+
+    // Check for reserved words (case-insensitive)
+    const reservedWords = ['api', 'admin', 'www', 'health', 'static'];
+    const isReserved = reservedWords.includes(value.toLowerCase());
+
+    if (!validFormat) {
+      input.classList.add('is-invalid');
+      feedback.className = 'validation-feedback invalid-feedback';
+      feedback.textContent = 'Only letters, numbers, hyphens, and underscores are allowed';
+    } else if (!validLength) {
+      input.classList.add('is-invalid');
+      feedback.className = 'validation-feedback invalid-feedback';
+      feedback.textContent = 'Must be between 1 and 12 characters long';
+    } else if (isReserved) {
+      input.classList.add('is-invalid');
+      feedback.className = 'validation-feedback invalid-feedback';
+      feedback.textContent = 'This shortcode uses a reserved word. Please choose a different one.';
+    } else {
+      input.classList.add('is-valid');
+      feedback.className = 'validation-feedback valid-feedback';
+      feedback.textContent = 'Valid custom shortcode';
+    }
+  }
+
+  private validateCustomShortcodeValue(value: string): { isValid: boolean; message: string } {
+    if (!value || !value.trim()) {
+      return { isValid: true, message: '' }; // Empty is valid (optional)
+    }
+
+    const trimmedValue = value.trim();
+
+    // Validate format: letters, numbers, hyphens, underscores only
+    const validFormat = /^[a-zA-Z0-9_-]+$/.test(trimmedValue);
+    if (!validFormat) {
+      return {
+        isValid: false,
+        message: 'Custom shortcode can only contain letters, numbers, hyphens, and underscores'
+      };
+    }
+
+    // Validate length: 1-12 characters
+    if (trimmedValue.length < 1 || trimmedValue.length > 12) {
+      return {
+        isValid: false,
+        message: 'Custom shortcode must be between 1 and 12 characters long'
+      };
+    }
+
+    // Check for reserved words (case-insensitive)
+    const reservedWords = ['api', 'admin', 'www', 'health', 'static'];
+    if (reservedWords.includes(trimmedValue.toLowerCase())) {
+      return {
+        isValid: false,
+        message: 'This shortcode uses a reserved word. Please choose a different one.'
+      };
+    }
+
+    return { isValid: true, message: '' };
+  }
+
+  private getFormattedErrorMessage(error: unknown): string {
+    if (!(error instanceof Error)) {
+      return 'Failed to save link. Please try again.';
+    }
+
+    const errorMessage = error.message.toLowerCase();
+
+    // Handle specific custom shortcode errors
+    if (errorMessage.includes('custom shortcode already exists')) {
+      return 'This custom shortcode is already taken. Please choose a different one.';
+    }
+
+    if (errorMessage.includes('custom shortcode uses a reserved word')) {
+      return 'This shortcode uses a reserved word. Please choose a different one.';
+    }
+
+    if (errorMessage.includes('invalid characters') || errorMessage.includes('shortcode format')) {
+      return 'Custom shortcode can only contain letters, numbers, hyphens, and underscores.';
+    }
+
+    if (errorMessage.includes('shortcode length') || errorMessage.includes('too long') || errorMessage.includes('too short')) {
+      return 'Custom shortcode must be between 1 and 12 characters long.';
+    }
+
+    // Handle general validation errors
+    if (errorMessage.includes('validation') || errorMessage.includes('invalid')) {
+      return 'Please check your input and try again.';
+    }
+
+    // Handle network/server errors
+    if (errorMessage.includes('fetch') || errorMessage.includes('network')) {
+      return 'Network error. Please check your connection and try again.';
+    }
+
+    if (errorMessage.includes('500') || errorMessage.includes('internal server error')) {
+      return 'Server error. Please try again later.';
+    }
+
+    if (errorMessage.includes('401') || errorMessage.includes('unauthorized')) {
+      return 'Authentication error. Please refresh the page and try again.';
+    }
+
+    if (errorMessage.includes('403') || errorMessage.includes('forbidden')) {
+      return 'You do not have permission to perform this action.';
+    }
+
+    // Return the original error message if it's user-friendly, otherwise a generic message
+    const originalMessage = error.message;
+    if (originalMessage.length < 100 && !originalMessage.includes('HTTP') && !originalMessage.includes('fetch')) {
+      return originalMessage;
+    }
+
+    return 'Failed to save link. Please try again.';
+  }
+
   private async handleSubmit(event: Event): Promise<void> {
     event.preventDefault();
     
@@ -957,10 +1147,19 @@ export class LinkFormComponent extends BaseComponent {
       this.showError('Please select a project');
       return;
     }
-    
+
     if (!data.url) {
       this.showError('URL is required');
       return;
+    }
+
+    // Validate custom shortcode if provided
+    if (data.customShortcode) {
+      const shortcodeValidation = this.validateCustomShortcodeValue(data.customShortcode);
+      if (!shortcodeValidation.isValid) {
+        this.showError(shortcodeValidation.message);
+        return;
+      }
     }
 
     try {
@@ -982,7 +1181,8 @@ export class LinkFormComponent extends BaseComponent {
           imageUrl: data.imageUrl,
           fallbackUrlOverride: data.fallbackUrlOverride,
           additionalMetadata: data.additionalMetadata,
-          properties: data.properties
+          properties: data.properties,
+          ...(data.customShortcode && { customShortcode: data.customShortcode })
         };
         
         await this.config.onSubmit(createData);
@@ -1015,7 +1215,8 @@ export class LinkFormComponent extends BaseComponent {
       }
     } catch (error) {
       console.error('Form submission failed:', error);
-      this.showError(error instanceof Error ? error.message : 'Failed to save link');
+      const errorMessage = this.getFormattedErrorMessage(error);
+      this.showError(errorMessage);
     } finally {
       this.setLoading(false);
     }

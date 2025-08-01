@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Custom Shortcode Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        .test-case {
+            margin: 10px 0;
+            padding: 10px;
+            background: #f5f5f5;
+            border-radius: 4px;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .info { background: #d1ecf1; color: #0c5460; }
+    </style>
+</head>
+<body>
+    <h1>Custom Shortcode Feature Test</h1>
+    
+    <div class="test-section">
+        <h2>Test Cases for Custom Shortcode Validation</h2>
+        
+        <div class="test-case">
+            <h3>Valid Custom Shortcodes</h3>
+            <ul>
+                <li><code>my-link</code> - Valid (letters, hyphens)</li>
+                <li><code>test123</code> - Valid (letters, numbers)</li>
+                <li><code>my_custom_link</code> - Valid (letters, underscores)</li>
+                <li><code>a</code> - Valid (minimum length)</li>
+                <li><code>abcdefghijkl</code> - Valid (maximum length, 12 chars)</li>
+            </ul>
+        </div>
+        
+        <div class="test-case">
+            <h3>Invalid Custom Shortcodes</h3>
+            <ul>
+                <li><code>my link</code> - Invalid (contains space)</li>
+                <li><code>test@123</code> - Invalid (contains special character)</li>
+                <li><code>abcdefghijklm</code> - Invalid (too long, 13 chars)</li>
+                <li><code></code> - Valid (empty, optional field)</li>
+                <li><code>api</code> - Invalid (reserved word)</li>
+                <li><code>admin</code> - Invalid (reserved word)</li>
+                <li><code>www</code> - Invalid (reserved word)</li>
+                <li><code>health</code> - Invalid (reserved word)</li>
+                <li><code>static</code> - Invalid (reserved word)</li>
+            </ul>
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Server Error Handling Test Cases</h2>
+        
+        <div class="test-case">
+            <h3>Expected Server Responses</h3>
+            <ul>
+                <li><strong>400 Bad Request:</strong> "Custom shortcode already exists. Please choose a different one."</li>
+                <li><strong>400 Bad Request:</strong> "Custom shortcode uses a reserved word. Please choose a different one."</li>
+                <li><strong>400 Bad Request:</strong> Validation errors for invalid characters or length</li>
+            </ul>
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Manual Testing Instructions</h2>
+        
+        <div class="test-case">
+            <h3>Steps to Test</h3>
+            <ol>
+                <li>Open the Rowt UI dashboard at <a href="http://localhost:8080" target="_blank">http://localhost:8080</a></li>
+                <li>Login with valid credentials</li>
+                <li>Navigate to the link creation form</li>
+                <li>Verify the "Custom Shortcode (optional)" field is present</li>
+                <li>Test the validation by entering various shortcodes from the test cases above</li>
+                <li>Verify real-time validation feedback appears as you type</li>
+                <li>Test form submission with valid custom shortcodes</li>
+                <li>Test form submission without custom shortcode (should auto-generate)</li>
+                <li>Test server-side error handling by creating duplicate shortcodes</li>
+            </ol>
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h2>API Test with curl</h2>
+        
+        <div class="test-case">
+            <h3>Test Custom Shortcode Creation</h3>
+            <pre><code>curl -X POST "http://localhost:3000/link" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "projectId": "your-project-id",
+    "apiKey": "your-api-key",
+    "url": "https://example.com",
+    "customShortcode": "my-custom-link",
+    "title": "My Custom Link"
+  }'</code></pre>
+        </div>
+        
+        <div class="test-case">
+            <h3>Test Auto-Generated Shortcode</h3>
+            <pre><code>curl -X POST "http://localhost:3000/link" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "projectId": "your-project-id",
+    "apiKey": "your-api-key",
+    "url": "https://example.com",
+    "title": "Auto-Generated Link"
+  }'</code></pre>
+        </div>
+    </div>
+    
+    <div class="result info">
+        <strong>Note:</strong> This is a manual test file. Open the dashboard in your browser and follow the testing instructions above.
+    </div>
+</body>
+</html>

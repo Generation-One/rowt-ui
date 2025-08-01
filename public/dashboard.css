@@ -2809,6 +2809,56 @@ body {
   font-size: 12px;
   margin-top: 4px;
   font-weight: 500;
+
+/* Custom Shortcode Field Styles */
+.custom-shortcode-group {
+  position: relative;
+}
+
+.custom-shortcode-group .form-control {
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 13px;
+  letter-spacing: 0.5px;
+}
+
+.custom-shortcode-group .form-control.is-valid {
+  border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+.custom-shortcode-group .form-control.is-invalid {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+.custom-shortcode-group .validation-feedback {
+  margin-top: 6px;
+  padding: 6px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  display: none;
+}
+
+.custom-shortcode-group .validation-feedback.valid-feedback {
+  display: block;
+  background-color: #d1fae5;
+  color: #065f46;
+  border: 1px solid #a7f3d0;
+}
+
+.custom-shortcode-group .validation-feedback.invalid-feedback {
+  display: block;
+  background-color: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+}
+
+.custom-shortcode-group .form-text {
+  color: #6b7280;
+  font-size: 12px;
+  margin-top: 4px;
+  line-height: 1.4;
 }
 
 /* Project Card Enhancements */

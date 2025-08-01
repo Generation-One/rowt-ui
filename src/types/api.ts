@@ -20,6 +20,7 @@ export interface Link extends RowtLink {
   shortCode?: string; // Generated from link ID or server response
   projectId?: string; // For backward compatibility
   clickCount?: number; // Mapped from lifetimeClicks
+  active?: boolean; // Link active status for edit mode
 }
 
 // Extended Project type with UI compatibility properties
@@ -48,6 +49,7 @@ export interface CreateLinkRequest {
   additionalMetadata?: Record<string, any>;
   properties?: Record<string, any>;
   expiration?: string;
+  customShortcode?: string;
 }
 
 export interface UpdateLinkRequest {

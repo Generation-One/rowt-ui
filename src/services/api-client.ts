@@ -178,8 +178,25 @@ export class ApiClient {
       });
 
       if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(errorText || `HTTP ${response.status}: ${response.statusText}`);
+        let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+
+        try {
+          const errorText = await response.text();
+          if (errorText) {
+            // Try to parse as JSON first for structured error responses
+            try {
+              const errorData = JSON.parse(errorText);
+              errorMessage = errorData.message || errorData.error || errorText;
+            } catch {
+              // If not JSON, use the raw text
+              errorMessage = errorText;
+            }
+          }
+        } catch {
+          // If we can't read the response body, use the default message
+        }
+
+        throw new Error(errorMessage);
       }
 
       // The API returns just the short code, we need to construct a Link object
