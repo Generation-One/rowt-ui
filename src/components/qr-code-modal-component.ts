@@ -254,7 +254,7 @@ export class QRCodeModalComponent extends BaseComponent {
       attributes: { type: 'text', placeholder: 'value' }
     }) as HTMLInputElement;
 
-    const removeBtn = this.createButton('🗑️', 'qr-remove-param-btn', () => {
+    const removeBtn = this.createButton('X', 'qr-remove-param-btn', () => {
       this.urlParams.splice(index, 1);
       row.remove();
       this.updateEffectiveUrl();
