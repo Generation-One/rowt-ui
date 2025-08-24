@@ -66,7 +66,11 @@ export class AuthService extends EventEmitter {
         timeoutPromise
       ]) as any;
 
-      console.log('✅ AuthService: User authenticated:', this.currentUser.email);
+      if (this.currentUser) {
+        console.log('✅ AuthService: User authenticated:', this.currentUser.email);
+      } else {
+        console.log('✅ AuthService: User authenticated');
+      }
       this.emit('auth:restored', this.currentUser);
       return true;
     } catch (error) {

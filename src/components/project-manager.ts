@@ -490,22 +490,22 @@ export class ProjectManager extends BaseComponent {
 
     const appstoreId = formData.get('appstoreId') as string;
     if (appstoreId !== (project.appstoreId || '')) {
-      editData.appstoreId = appstoreId || undefined;
+      if (appstoreId) { editData.appstoreId = appstoreId; }
     }
 
     const playstoreId = formData.get('playstoreId') as string;
     if (playstoreId !== (project.playstoreId || '')) {
-      editData.playstoreId = playstoreId || undefined;
+      if (playstoreId) { editData.playstoreId = playstoreId; }
     }
 
     const iosScheme = formData.get('iosScheme') as string;
     if (iosScheme !== (project.iosScheme || '')) {
-      editData.iosScheme = iosScheme || undefined;
+      if (iosScheme) { editData.iosScheme = iosScheme; }
     }
 
     const androidScheme = formData.get('androidScheme') as string;
     if (androidScheme !== (project.androidScheme || '')) {
-      editData.androidScheme = androidScheme || undefined;
+      if (androidScheme) { editData.androidScheme = androidScheme; }
     }
 
     console.log('Edit data to send:', editData);

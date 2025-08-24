@@ -22,6 +22,8 @@ export class QRCodeModalComponent extends BaseComponent {
   private qrOptions: QRCodeOptions;
   private qrCanvas: HTMLCanvasElement | null = null;
   private qrContainer: HTMLElement | null = null;
+  private linkUrlEl: HTMLElement | null = null;
+  private urlParams: { key: string; value: string }[] = [];
 
   constructor(container: HTMLElement, config: QRCodePageConfig) {
     super(container);
@@ -63,11 +65,15 @@ export class QRCodeModalComponent extends BaseComponent {
     // Controls section
     const controlsSection = this.createControlsSection();
 
+    // Parameters section
+    const paramsSection = this.createParamsSection();
+
     // Download section
     const downloadSection = this.createDownloadSection();
 
     contentArea.appendChild(qrSection);
     contentArea.appendChild(controlsSection);
+    contentArea.appendChild(paramsSection);
     contentArea.appendChild(downloadSection);
 
     pageContent.appendChild(contentArea);
@@ -106,13 +112,13 @@ export class QRCodeModalComponent extends BaseComponent {
       textContent: this.config.link.title || 'Untitled Link',
       className: 'qr-link-title'
     });
-    const linkUrl = createElement('div', {
+    this.linkUrlEl = createElement('div', {
       textContent: this.config.shortUrl,
       className: 'qr-link-url'
     });
 
     linkInfo.appendChild(linkTitle);
-    linkInfo.appendChild(linkUrl);
+    if (this.linkUrlEl) linkInfo.appendChild(this.linkUrlEl);
 
     titleSection.appendChild(title);
     titleSection.appendChild(linkInfo);
@@ -125,11 +131,11 @@ export class QRCodeModalComponent extends BaseComponent {
 
   private createControlsSection(): HTMLElement {
     const section = createElement('div', { className: 'qr-controls-section' });
-    const title = createElement('h3', { 
+    const title = createElement('h3', {
       textContent: 'Customization',
       className: 'qr-section-title'
     });
-    
+
     const controls = createElement('div', { className: 'qr-controls' });
     
     // Size control
@@ -192,36 +198,131 @@ export class QRCodeModalComponent extends BaseComponent {
     controls.appendChild(sizeControl);
     controls.appendChild(errorLevelControl);
     controls.appendChild(colorControls);
-    
+
     section.appendChild(title);
     section.appendChild(controls);
-    
+
     return section;
+  }
+
+  private createParamsSection(): HTMLElement {
+    const section = createElement('div', { className: 'qr-controls-section' });
+    const title = createElement('h3', {
+      textContent: 'URL Parameters',
+      className: 'qr-section-title'
+    });
+
+    const info = createElement('p', {
+      className: 'qr-params-info',
+      textContent: 'Optionally add key=value parameters. They will be appended to the short URL and encoded into the QR code.'
+    });
+
+    const list = createElement('div', { className: 'qr-params-list' });
+
+    const addRow = () => {
+      const rowIndex = this.urlParams.length;
+      this.urlParams.push({ key: '', value: '' });
+      const row = this.createParamRow(rowIndex);
+      list.appendChild(row);
+    };
+
+    const addBtn = this.createButton('Add Parameter', 'btn btn-secondary', () => {
+      addRow();
+    });
+
+    section.appendChild(title);
+    section.appendChild(info);
+    section.appendChild(list);
+    section.appendChild(addBtn);
+
+    // Start with one empty row for convenience
+    if (this.urlParams.length === 0) addRow();
+
+    return section;
+  }
+
+  private createParamRow(index: number): HTMLElement {
+    const row = createElement('div', { className: 'qr-param-row' });
+
+    const keyInput = createElement('input', {
+      className: 'qr-param-input',
+      attributes: { type: 'text', placeholder: 'key' }
+    }) as HTMLInputElement;
+
+    const valueInput = createElement('input', {
+      className: 'qr-param-input',
+      attributes: { type: 'text', placeholder: 'value' }
+    }) as HTMLInputElement;
+
+    const removeBtn = this.createButton('Remove', 'btn btn-danger btn-sm', () => {
+      this.urlParams.splice(index, 1);
+      row.remove();
+      this.updateEffectiveUrl();
+    });
+
+    const onChange = () => {
+      this.urlParams[index] = { key: keyInput.value.trim(), value: valueInput.value.trim() };
+      this.updateEffectiveUrl();
+    };
+
+    keyInput.addEventListener('input', onChange);
+    valueInput.addEventListener('input', onChange);
+
+    row.appendChild(keyInput);
+    row.appendChild(valueInput);
+    row.appendChild(removeBtn);
+
+    return row;
+  }
+
+  private getEffectiveUrl(): string {
+    const url = new URL(this.config.shortUrl, window.location.origin);
+    const params = new URLSearchParams(url.search);
+
+    // Add custom params (skip blanks)
+    for (const { key, value } of this.urlParams) {
+      if (key) params.set(key, value);
+    }
+
+    url.search = params.toString();
+    return url.toString();
+  }
+
+  private updateEffectiveUrl(): void {
+    const effectiveUrl = this.getEffectiveUrl();
+    if (this.linkUrlEl) this.linkUrlEl.textContent = effectiveUrl;
+    this.generateQRCode();
   }
 
   private createDownloadSection(): HTMLElement {
     const section = createElement('div', { className: 'qr-download-section' });
-    const title = createElement('h3', { 
+    const title = createElement('h3', {
       textContent: 'Download',
       className: 'qr-section-title'
     });
-    
+
     const buttons = createElement('div', { className: 'qr-download-buttons' });
-    
+
     const pngBtn = this.createButton('Download PNG', 'btn btn-primary qr-download-btn', () => {
       this.downloadQRCode('png');
     });
-    
+
     const svgBtn = this.createButton('Download SVG', 'btn btn-secondary qr-download-btn', () => {
       this.downloadQRCode('svg');
     });
-    
+
+    const copyUrlBtn = this.createButton('Copy URL', 'btn btn-secondary qr-download-btn', () => {
+      const url = this.getEffectiveUrl();
+      navigator.clipboard.writeText(url).then(() => this.showSuccess('URL copied to clipboard'));
+    });
+
     buttons.appendChild(pngBtn);
     buttons.appendChild(svgBtn);
-    
+    buttons.appendChild(copyUrlBtn);
+
     section.appendChild(title);
     section.appendChild(buttons);
-    
+
     return section;
   }
 
@@ -352,7 +453,8 @@ export class QRCodeModalComponent extends BaseComponent {
       }) as HTMLCanvasElement;
 
       // Generate QR code with proper aspect ratio
-      await QRCode.toCanvas(this.qrCanvas, this.config.shortUrl, {
+      const dataUrl = this.getEffectiveUrl();
+      await QRCode.toCanvas(this.qrCanvas, dataUrl, {
         width: this.qrOptions.size,
         margin: this.qrOptions.margin,
         color: {
@@ -423,7 +525,8 @@ export class QRCodeModalComponent extends BaseComponent {
 
       } else if (format === 'svg') {
         // Generate SVG
-        const svgString = await QRCode.toString(this.config.shortUrl, {
+        const dataUrl = this.getEffectiveUrl();
+        const svgString = await QRCode.toString(dataUrl, {
           type: 'svg',
           width: this.qrOptions.size,
           margin: this.qrOptions.margin,

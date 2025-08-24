@@ -139,7 +139,8 @@ export class ApiClient {
         ...projectData
       };
 
-      const updatedProject = await this.sdkService.updateProject(updateData);
+      // Cast to SDK type to satisfy exactOptionalPropertyTypes; API accepts partial updates
+      const updatedProject = await this.sdkService.updateProject(updateData as any);
       return updatedProject;
     } catch (error) {
       console.error('Failed to edit project:', error);

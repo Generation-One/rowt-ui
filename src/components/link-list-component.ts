@@ -774,7 +774,7 @@ export class LinkListComponent extends BaseComponent {
     }
   }
 
-  private showSuccess(message: string): void {
+  protected showSuccess(message: string): void {
     this.showNotification(message, 'success');
   }
 
@@ -807,7 +807,7 @@ export class LinkListComponent extends BaseComponent {
     this.clearSelection();
   }
 
-  private createIconButton(icon: string, className: string, onClick: () => void): HTMLButtonElement {
+  protected createIconButton(icon: string, className: string, onClick: () => void): HTMLButtonElement {
     const button = createElement('button', {
       textContent: icon,
       className: className,
