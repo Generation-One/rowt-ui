@@ -24,7 +24,7 @@ export class LinkFormComponent extends BaseComponent {
     this.config = config;
   }
 
-  render(): void {
+  async render(): Promise<void> {
     this.checkDestroyed();
     this.clear();
 
@@ -185,11 +185,93 @@ export class LinkFormComponent extends BaseComponent {
 
     // Assemble form
     formContainer.appendChild(header);
+
+    // Add shortened URL display for edit mode
+    if (this.config.mode === 'edit' && this.config.link) {
+      const urlDisplaySection = await this.createShortenedUrlDisplay();
+      formContainer.appendChild(urlDisplaySection);
+    }
+
     formContainer.appendChild(this.form);
     this.container.appendChild(formContainer);
   }
 
+  private async createShortenedUrlDisplay(): Promise<HTMLElement> {
+    const displaySection = createElement('div', { className: 'shortened-url-display' });
 
+    if (!this.config.link) {
+      return displaySection;
+    }
+
+    // Generate the full shortened URL
+    const { generateShortUrl } = await import('../utils/data-transformers.js');
+    const shortUrl = await generateShortUrl(this.config.link.shortCode || this.config.link.id);
+
+    // Create the display container
+    const container = createElement('div', { className: 'url-display-container' });
+
+    // Label
+    const label = createElement('label', {
+      textContent: 'Shortened URL:',
+      className: 'url-display-label'
+    });
+
+    // URL display with copy functionality
+    const urlContainer = createElement('div', { className: 'url-display-input-container' });
+
+    const urlInput = createElement('input', {
+      attributes: {
+        type: 'text',
+        value: shortUrl,
+        readonly: 'true'
+      },
+      className: 'url-display-input'
+    }) as HTMLInputElement;
+
+    const copyButton = createElement('button', {
+      textContent: '📋 Copy',
+      attributes: { type: 'button', title: 'Copy shortened URL to clipboard' },
+      className: 'url-display-copy-btn'
+    }) as HTMLButtonElement;
+
+    copyButton.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(shortUrl);
+        copyButton.textContent = '✅ Copied!';
+        setTimeout(() => {
+          copyButton.textContent = '📋 Copy';
+        }, 2000);
+      } catch (error) {
+        // Fallback for older browsers
+        urlInput.select();
+        document.execCommand('copy');
+        copyButton.textContent = '✅ Copied!';
+        setTimeout(() => {
+          copyButton.textContent = '📋 Copy';
+        }, 2000);
+      }
+    });
+
+    const testButton = createElement('button', {
+      textContent: '🔗 Test',
+      attributes: { type: 'button', title: 'Open shortened URL in new tab' },
+      className: 'url-display-test-btn'
+    }) as HTMLButtonElement;
+
+    testButton.addEventListener('click', () => {
+      window.open(shortUrl, '_blank');
+    });
+
+    urlContainer.appendChild(urlInput);
+    urlContainer.appendChild(copyButton);
+    urlContainer.appendChild(testButton);
+
+    container.appendChild(label);
+    container.appendChild(urlContainer);
+    displaySection.appendChild(container);
+
+    return displaySection;
+  }
 
   private createLinkFormGroup(
     label: string,
@@ -1088,9 +1170,16 @@ export class LinkFormComponent extends BaseComponent {
     const formData = new FormData(this.form);
     const data: any = {};
 
+    // Fields that should be included even when empty (to allow clearing)
+    const allowEmptyFields = ['fallbackUrlOverride', 'title', 'description', 'imageUrl'];
+
     for (const [key, value] of formData.entries()) {
-      if (value && typeof value === 'string' && value.trim()) {
-        data[key] = value.trim();
+      if (typeof value === 'string') {
+        const trimmedValue = value.trim();
+        // Include field if it has a value OR if it's in the allowEmpty list
+        if (trimmedValue || allowEmptyFields.includes(key)) {
+          data[key] = trimmedValue;
+        }
       }
     }
 

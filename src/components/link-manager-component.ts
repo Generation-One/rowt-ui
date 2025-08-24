@@ -70,7 +70,7 @@ export class LinkManagerComponent extends BaseComponent {
       onEdit: (link: Link) => this.handleEditLink(link),
       onDelete: (link: Link) => this.handleDeleteLink(link),
       onBulkDelete: (linkIds: string[]) => this.handleBulkDelete(linkIds),
-      onCreateNew: () => this.showCreateForm(),
+      onCreateNew: () => { this.showCreateForm(); },
       onGenerateQR: (link: Link) => this.handleGenerateQR(link)
     };
 
@@ -78,7 +78,7 @@ export class LinkManagerComponent extends BaseComponent {
     await this.linkListComponent.render();
   }
 
-  private showCreateForm(): void {
+  private async showCreateForm(): Promise<void> {
     this.currentView = 'form';
     this.editingLink = null;
 
@@ -95,10 +95,10 @@ export class LinkManagerComponent extends BaseComponent {
     };
 
     this.linkFormComponent = new LinkFormComponent(contentArea, this.apiClient, formConfig);
-    this.linkFormComponent.render();
+    await this.linkFormComponent.render();
   }
 
-  private showEditForm(link: Link): void {
+  private async showEditForm(link: Link): Promise<void> {
     this.currentView = 'form';
     this.editingLink = link;
 
@@ -116,7 +116,7 @@ export class LinkManagerComponent extends BaseComponent {
     };
 
     this.linkFormComponent = new LinkFormComponent(contentArea, this.apiClient, formConfig);
-    this.linkFormComponent.render();
+    await this.linkFormComponent.render();
   }
 
   private showNoProjectsState(container: HTMLElement): void {
@@ -390,6 +390,21 @@ export class LinkManagerComponent extends BaseComponent {
     // If we're showing the no projects state and now have projects, show the list
     if (this.projects.length > 0 && this.currentView === 'list') {
       this.showListView();
+    }
+  }
+
+  public setProjectFilter(projectId: string): void {
+    // Switch to list view if not already there
+    if (this.currentView !== 'list') {
+      this.showListView().then(() => {
+        // Set the filter after the list view is rendered
+        if (this.linkListComponent) {
+          this.linkListComponent.setProjectFilter(projectId);
+        }
+      });
+    } else if (this.linkListComponent) {
+      // Already in list view, just set the filter
+      this.linkListComponent.setProjectFilter(projectId);
     }
   }
 }

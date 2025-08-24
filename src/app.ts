@@ -233,7 +233,10 @@ export class App {
       // Project manager events
       this.projectManager.on('project:view-links', (project) => {
         console.log('View links for project:', project);
-        // TODO: Switch to links tab and filter by project
+        // Switch to links tab and filter by the selected project
+        if (this.dashboardComponent) {
+          this.dashboardComponent.setLinksProjectFilter(project.id);
+        }
       });
 
 

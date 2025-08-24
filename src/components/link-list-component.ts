@@ -356,17 +356,20 @@ export class LinkListComponent extends BaseComponent {
     
     // Short code
     const shortCodeTd = createElement('td', { className: 'short-code-cell' });
-    const shortUrl = await generateShortUrl(link.shortCode || link.id);
-    const shortCodeLink = createElement('a', {
+    const shortCodeButton = createElement('button', {
       textContent: link.shortCode || link.id,
       attributes: {
-        href: shortUrl,
-        target: '_blank',
-        title: 'Open short link'
+        type: 'button',
+        title: 'Click to edit link'
       },
       className: 'short-code-link'
+    }) as HTMLButtonElement;
+
+    shortCodeButton.addEventListener('click', () => {
+      this.config.onEdit(link);
     });
-    shortCodeTd.appendChild(shortCodeLink);
+
+    shortCodeTd.appendChild(shortCodeButton);
     row.appendChild(shortCodeTd);
     
     // URL
@@ -479,15 +482,19 @@ export class LinkListComponent extends BaseComponent {
     
     // Card header with checkbox and actions
     const cardHeader = createElement('div', { className: 'card-header' });
-    
+
+    // Checkbox wrapper
+    const checkboxWrapper = createElement('div', { className: 'card-checkbox' });
     const checkbox = createElement('input', {
       attributes: { type: 'checkbox', value: link.id }
     }) as HTMLInputElement;
-    
+
     checkbox.checked = this.selection.selectedIds.has(link.id);
     checkbox.addEventListener('change', () => {
       this.toggleLinkSelection(link.id, checkbox.checked);
     });
+
+    checkboxWrapper.appendChild(checkbox);
     
     const actions = createElement('div', { className: 'card-actions' });
 
@@ -541,8 +548,8 @@ export class LinkListComponent extends BaseComponent {
     actions.appendChild(qrBtn);
     actions.appendChild(analyticsBtn);
     actions.appendChild(deleteBtn);
-    
-    cardHeader.appendChild(checkbox);
+
+    cardHeader.appendChild(checkboxWrapper);
     cardHeader.appendChild(actions);
     
     // Card content
@@ -550,22 +557,27 @@ export class LinkListComponent extends BaseComponent {
     
     // Short code
     const shortCode = createElement('div', { className: 'card-short-code' });
-    const shortUrl = await generateShortUrl(link.shortCode || link.id);
-    const shortCodeLink = createElement('a', {
+    const shortCodeButton = createElement('button', {
       textContent: link.shortCode || link.id,
       attributes: {
-        href: shortUrl,
-        target: '_blank'
+        type: 'button',
+        title: 'Click to edit link'
       },
       className: 'short-link'
+    }) as HTMLButtonElement;
+
+    shortCodeButton.addEventListener('click', () => {
+      this.config.onEdit(link);
     });
-    shortCode.appendChild(shortCodeLink);
+
+    shortCode.appendChild(shortCodeButton);
     
     // Title
-    const title = createElement('h4', { 
-      textContent: link.title || 'Untitled Link',
-      className: 'card-title'
+    const titleContainer = createElement('div', { className: 'card-title' });
+    const title = createElement('h4', {
+      textContent: link.title || 'Untitled Link'
     });
+    titleContainer.appendChild(title);
     
     // URL
     const url = createElement('p', { 
@@ -595,7 +607,7 @@ export class LinkListComponent extends BaseComponent {
     meta.appendChild(dateSpan);
     
     cardContent.appendChild(shortCode);
-    cardContent.appendChild(title);
+    cardContent.appendChild(titleContainer);
     cardContent.appendChild(url);
     cardContent.appendChild(meta);
     
@@ -805,6 +817,19 @@ export class LinkListComponent extends BaseComponent {
 
   public clearSelectionPublic(): void {
     this.clearSelection();
+  }
+
+  public setProjectFilter(projectId: string): void {
+    this.searchState.projectFilter = projectId;
+
+    // Update the project filter dropdown to reflect the change
+    const projectFilter = this.container.querySelector('#project-filter') as HTMLSelectElement;
+    if (projectFilter) {
+      projectFilter.value = projectId;
+    }
+
+    // Reload links with the new filter
+    this.loadLinks();
   }
 
   protected createIconButton(icon: string, className: string, onClick: () => void): HTMLButtonElement {

@@ -812,6 +812,75 @@ body {
   background-color: #545b62;
 }
 
+/* Shortened URL Display */
+.shortened-url-display {
+  margin-bottom: 24px;
+  padding: 20px;
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+}
+
+.url-display-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.url-display-label {
+  font-weight: 600;
+  color: #495057;
+  font-size: 14px;
+  margin: 0;
+}
+
+.url-display-input-container {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.url-display-input {
+  flex: 1;
+  padding: 10px 12px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  background: white;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 13px;
+  color: #007bff;
+}
+
+.url-display-copy-btn,
+.url-display-test-btn {
+  padding: 10px 16px;
+  border: 1px solid #007bff;
+  border-radius: 4px;
+  background: white;
+  color: #007bff;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.url-display-copy-btn:hover,
+.url-display-test-btn:hover {
+  background: #007bff;
+  color: white;
+}
+
+.url-display-test-btn {
+  border-color: #28a745;
+  color: #28a745;
+}
+
+.url-display-test-btn:hover {
+  background: #28a745;
+  color: white;
+}
+
 /* Link List Container */
 .link-list-container {
   background: white;
@@ -1068,6 +1137,11 @@ body {
   border-radius: 4px;
   background: #f0f8ff;
   transition: all 0.2s ease;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
 }
 
 .short-code-link:hover {
@@ -1328,6 +1402,10 @@ body {
 .card-short-code {
   font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
   font-size: 13px;
+  margin-bottom: 8px;
+}
+
+.card-short-code .short-link {
   color: #007bff;
   font-weight: 500;
   text-decoration: none;
@@ -1335,9 +1413,13 @@ body {
   background: #f0f8ff;
   border-radius: 4px;
   transition: all 0.2s ease;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: inherit;
 }
 
-.card-short-code:hover {
+.card-short-code .short-link:hover {
   background: #e6f3ff;
   text-decoration: underline;
 }

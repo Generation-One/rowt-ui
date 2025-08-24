@@ -425,6 +425,23 @@ export class DashboardComponent extends BaseComponent {
     }
   }
 
+  // Public methods for external control
+  public switchToLinksTab(): void {
+    this.switchTab('links');
+  }
+
+  public setLinksProjectFilter(projectId: string): void {
+    // Switch to links tab first
+    this.switchTab('links');
+
+    // Set the project filter after a brief delay to ensure the tab is loaded
+    setTimeout(() => {
+      if (this.linkManagerComponent) {
+        this.linkManagerComponent.setProjectFilter(projectId);
+      }
+    }, 100);
+  }
+
   private updateUserDisplay(): void {
     const userInfoElement = querySelector('.user-info', this.container);
     if (userInfoElement) {
