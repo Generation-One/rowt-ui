@@ -226,7 +226,7 @@ export class QRCodeModalComponent extends BaseComponent {
       list.appendChild(row);
     };
 
-    const addBtn = this.createButton('Add Parameter', 'btn btn-secondary', () => {
+    const addBtn = this.createButton('Add Parameter', 'qr-add-param-btn', () => {
       addRow();
     });
 
@@ -254,7 +254,7 @@ export class QRCodeModalComponent extends BaseComponent {
       attributes: { type: 'text', placeholder: 'value' }
     }) as HTMLInputElement;
 
-    const removeBtn = this.createButton('Remove', 'btn btn-danger btn-sm', () => {
+    const removeBtn = this.createButton('🗑️', 'qr-remove-param-btn', () => {
       this.urlParams.splice(index, 1);
       row.remove();
       this.updateEffectiveUrl();
