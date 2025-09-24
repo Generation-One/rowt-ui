@@ -1,5 +1,6 @@
 import { BaseComponent } from './base-component.js';
 import { LinkManagerComponent } from './link-manager-component.js';
+import { WellKnownComponent } from './well-known-component.js';
 import { AuthService } from '../services/auth-service.js';
 import { ApiClient } from '../services/api-client.js';
 import { createElement, querySelector, querySelectorAll } from '../utils/dom-helpers.js';
@@ -12,6 +13,7 @@ export class DashboardComponent extends BaseComponent {
   private currentTab: TabName = 'overview';
   private user: User | null = null;
   private linkManagerComponent: LinkManagerComponent | null = null;
+  private wellKnownComponent: WellKnownComponent | null = null;
 
   constructor(
     container: HTMLElement,
@@ -116,6 +118,7 @@ export class DashboardComponent extends BaseComponent {
       { name: 'overview', label: 'Overview' },
       { name: 'projects', label: 'Projects' },
       { name: 'links', label: 'Links' },
+      { name: 'well-known', label: 'Well-Known' },
       { name: 'analytics', label: 'Analytics' }
     ];
     
@@ -159,16 +162,24 @@ export class DashboardComponent extends BaseComponent {
     });
     linksTab.appendChild(this.createLinksContent());
     
+    // Well-Known tab
+    const wellKnownTab = createElement('div', {
+      id: 'well-known-tab',
+      className: 'tab-content'
+    });
+    wellKnownTab.appendChild(this.createWellKnownContent());
+
     // Analytics tab
     const analyticsTab = createElement('div', {
       id: 'analytics-tab',
       className: 'tab-content'
     });
     analyticsTab.appendChild(this.createAnalyticsContent());
-    
+
     container.appendChild(overviewTab);
     container.appendChild(projectsTab);
     container.appendChild(linksTab);
+    container.appendChild(wellKnownTab);
     container.appendChild(analyticsTab);
     
     return container;
@@ -294,6 +305,24 @@ export class DashboardComponent extends BaseComponent {
     return content;
   }
 
+  private createWellKnownContent(): HTMLElement {
+    const content = createElement('div', { className: 'well-known-tab-content' });
+
+    // Initialize the WellKnownComponent
+    this.wellKnownComponent = new WellKnownComponent(content, this.apiClient);
+
+    // Listen for modal events from the well-known component
+    this.wellKnownComponent.on('modal:show', (config) => {
+      this.emit('modal:show', config);
+    });
+
+    this.wellKnownComponent.on('modal:hide', () => {
+      this.emit('modal:hide');
+    });
+
+    return content;
+  }
+
   private createAnalyticsContent(): HTMLElement {
     const content = createElement('div');
     
@@ -393,6 +422,9 @@ export class DashboardComponent extends BaseComponent {
       case 'links':
         this.loadLinksData();
         break;
+      case 'well-known':
+        this.loadWellKnownData();
+        break;
       case 'analytics':
         // Analytics loading logic
         break;
@@ -421,6 +453,16 @@ export class DashboardComponent extends BaseComponent {
         await this.linkManagerComponent.render();
       } catch (error) {
         console.error('Failed to load links:', error);
+      }
+    }
+  }
+
+  private async loadWellKnownData(): Promise<void> {
+    if (this.wellKnownComponent) {
+      try {
+        await this.wellKnownComponent.render();
+      } catch (error) {
+        console.error('Failed to load well-known files:', error);
       }
     }
   }

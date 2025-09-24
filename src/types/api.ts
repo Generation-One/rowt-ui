@@ -120,3 +120,33 @@ export interface DashboardStats {
   totalClicks: number;
   serverStatus: 'ok' | 'error';
 }
+
+// Well-Known Files types
+export interface WellKnownFile {
+  id: string;
+  filename: string;
+  content: string;
+  contentType: string;
+  enabled: boolean;
+  userId: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface CreateWellKnownRequest {
+  filename: string;
+  content: string;
+  contentType?: string;
+  enabled?: boolean;
+}
+
+export interface UpdateWellKnownRequest {
+  content?: string;
+  contentType?: string;
+  enabled?: boolean;
+}
+
+export interface WellKnownListResponse {
+  files: WellKnownFile[];
+  total: number;
+}

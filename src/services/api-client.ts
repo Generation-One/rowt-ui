@@ -10,7 +10,11 @@ import type {
   DeleteLinkRequest,
   GetLinksRequest,
   GetLinksResponse,
-  DashboardStats
+  DashboardStats,
+  WellKnownFile,
+  CreateWellKnownRequest,
+  UpdateWellKnownRequest,
+  WellKnownListResponse
 } from '../types/api.js';
 import { getRowtSDK, RowtSDKError } from './rowt-sdk-service.js';
 import { transformLink, transformLinks, transformProjects } from '../utils/data-transformers.js';
@@ -517,6 +521,59 @@ export class ApiClient {
         totalClicks: 0,
         serverStatus: 'error' as const
       };
+    }
+  }
+
+  // Well-Known Files Management
+  async getWellKnownFiles(): Promise<WellKnownFile[]> {
+    try {
+      await this.ensureInitialized();
+      return await this.sdkService.getWellKnownFiles();
+    } catch (error) {
+      console.error('Failed to get well-known files:', error);
+      if (error instanceof RowtSDKError) {
+        throw new Error(error.message);
+      }
+      throw new Error('Failed to load well-known files');
+    }
+  }
+
+  async createWellKnownFile(data: CreateWellKnownRequest): Promise<WellKnownFile> {
+    try {
+      await this.ensureInitialized();
+      return await this.sdkService.createWellKnownFile(data);
+    } catch (error) {
+      console.error('Failed to create well-known file:', error);
+      if (error instanceof RowtSDKError) {
+        throw new Error(error.message);
+      }
+      throw new Error('Failed to create well-known file');
+    }
+  }
+
+  async updateWellKnownFile(id: string, data: UpdateWellKnownRequest): Promise<WellKnownFile> {
+    try {
+      await this.ensureInitialized();
+      return await this.sdkService.updateWellKnownFile(id, data);
+    } catch (error) {
+      console.error('Failed to update well-known file:', error);
+      if (error instanceof RowtSDKError) {
+        throw new Error(error.message);
+      }
+      throw new Error('Failed to update well-known file');
+    }
+  }
+
+  async deleteWellKnownFile(id: string): Promise<void> {
+    try {
+      await this.ensureInitialized();
+      await this.sdkService.deleteWellKnownFile(id);
+    } catch (error) {
+      console.error('Failed to delete well-known file:', error);
+      if (error instanceof RowtSDKError) {
+        throw new Error(error.message);
+      }
+      throw new Error('Failed to delete well-known file');
     }
   }
 }

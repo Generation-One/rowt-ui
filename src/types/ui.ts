@@ -2,7 +2,7 @@
 import type { User } from './api.js';
 
 // UI State Types
-export type TabName = 'overview' | 'projects' | 'links' | 'analytics';
+export type TabName = 'overview' | 'projects' | 'links' | 'analytics' | 'well-known';
 
 export interface AppState {
   isAuthenticated: boolean;

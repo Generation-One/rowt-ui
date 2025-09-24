@@ -204,6 +204,46 @@ export class RowtSDKService {
     }
   }
 
+  // Well-Known Files Management Methods
+  async getWellKnownFiles(): Promise<any[]> {
+    try {
+      const sdk = this.getSDK();
+      const response = await (sdk as any).client.post('/well-known/getAll');
+      return response.data || [];
+    } catch (error: any) {
+      throw new RowtSDKError('Failed to get well-known files', error);
+    }
+  }
+
+  async createWellKnownFile(data: any): Promise<any> {
+    try {
+      const sdk = this.getSDK();
+      const response = await (sdk as any).client.post('/well-known/create', data);
+      return response.data;
+    } catch (error) {
+      throw new RowtSDKError('Failed to create well-known file', error);
+    }
+  }
+
+  async updateWellKnownFile(id: string, data: any): Promise<any> {
+    try {
+      const sdk = this.getSDK();
+      const response = await (sdk as any).client.post('/well-known/update', { id, data });
+      return response.data;
+    } catch (error) {
+      throw new RowtSDKError('Failed to update well-known file', error);
+    }
+  }
+
+  async deleteWellKnownFile(id: string): Promise<void> {
+    try {
+      const sdk = this.getSDK();
+      await (sdk as any).client.post('/well-known/delete', { id });
+    } catch (error) {
+      throw new RowtSDKError('Failed to delete well-known file', error);
+    }
+  }
+
   /**
    * Reset the service (useful for testing or re-initialization)
    */
